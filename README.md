@@ -2,7 +2,7 @@ my pi setup
 
 _i don't actually recommend u use this setup. it's just a reference at what's possible_
 
-![Pi setup preview](assets/preview.png)
+![Pi setup preview](assets/preview-maky.png)
 
 ## if u really want to use it
 
