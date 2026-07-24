@@ -16,6 +16,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 - [Thinking Levels / Effort](#thinking-levels--effort)
 - [Extensions (Plugins)](#extensions-plugins)
 - [Commands (Controllers)](#commands-controllers)
+- [Verification](#verification)
 - [MCP Integration](#mcp-integration)
 - [Secret Masking (`cloak.json`)](#secret-masking-cloakjson)
 - [Themes](#themes)
@@ -38,12 +39,16 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
    ```
 3. **Install dependencies:**
    ```sh
-   cd ~/.pi/agent && pnpm install
-   cd extensions/web-tools && npm install
-   cd extensions/pi-skill-toggle && npm install
-   cd extensions/save-md && npm install
+   cd ~/.pi/agent
+   pnpm install
+   npm --prefix extensions/web-tools install
+   npm --prefix extensions/pi-skill-toggle install
+   npm --prefix extensions/save-md install
+   pnpm --dir extensions/pi-mcp install
    ```
 4. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
+
+After adding, removing, or changing an extension or skill, run `/reload` in existing Pi sessions.
 
 ---
 
@@ -132,6 +137,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`web-tools/`](extensions/web-tools/) | Tools | dmmulroy | Web fetch and search tools with SSRF protection and Exa search |
 | [`pi-mcp/`](extensions/pi-mcp/) | Extension package | custom | MCP adapter with OAuth support for connecting to MCP servers |
 | [`ephemeral/`](extensions/ephemeral/) | Extension package | custom | Ephemeral patching system with catalog, project state, and TUI |
+| [`@plannotator/pi-extension`](https://github.com/backnotprop/plannotator) | Package | third-party | Interactive plan review, response annotation, and code review |
 
 ### Extension Details
 
@@ -250,6 +256,9 @@ Full MCP (Model Context Protocol) adapter with OAuth support. Provides server ma
 #### 📦 `ephemeral/` — Ephemeral Patching System
 Patch application system with catalog, project state tracking, and TUI for browsing/applying patches.
 
+#### 🗒️ `@plannotator/pi-extension` — Plan and Code Review
+Configured through `settings.json`. Adds interactive planning, assistant-response annotation, and code-review commands, plus the `plannotator_submit_plan` tool.
+
 ---
 
 ## Commands (Controllers)
@@ -265,6 +274,10 @@ All slash commands registered by extensions:
 | `/copy-all` | copy-all | Copy all messages to clipboard |
 | `/flow-title` | flow-title | Enable the animated gradient header |
 | `/flow-title-builtin` | flow-title | Restore Pi's built-in header |
+| `/ephemeral` | ephemeral | Select project-local ephemeral resources |
+| `/mcp` | pi-mcp | Show MCP status, tools, or reconnect servers |
+| `/mcp-auth <server>` | pi-mcp | Authenticate an MCP server with OAuth |
+| `/mcp-auth remove <server>` | pi-mcp | Remove stored MCP credentials |
 | `/toggle-skills` | pi-skill-toggle | Open interactive skill toggle TUI |
 | `/save-md <name>` | save-md | Save the AI's last reply as a Markdown file |
 | `/cloak-status` | pi-cloak | Show active secret masking patterns |
@@ -273,6 +286,10 @@ All slash commands registered by extensions:
 | `/yeet` | yeet | Add, commit, and push changes |
 | `/yeet <msg>` | yeet | Same with additional instructions |
 | `/lg` | lg | Summarize unstaged git changes |
+| `/plannotator` | Plannotator | Toggle interactive planning mode |
+| `/plannotator-review` | Plannotator | Review current changes or a pull request |
+| `/plannotator-annotate` | Plannotator | Annotate a Markdown file or directory |
+| `/plannotator-last` | Plannotator | Annotate the latest assistant response |
 
 **Tools** (auto-invoked by the AI, not typed):
 
@@ -280,12 +297,16 @@ All slash commands registered by extensions:
 |------|-----------|-------------|
 | `webfetch` | web-tools | Fetch a URL as markdown/text/images |
 | `websearch` | web-tools | Search the web via Exa |
+| `mcp` | pi-mcp | Discover, connect to, and call configured MCP servers |
+| `plannotator_submit_plan` | Plannotator | Submit a plan through the interactive review flow |
 
 **Flags:**
 
 | Flag | Extension | Description |
 |------|-----------|-------------|
 | `--update` | update | Run `/update` at session start |
+| `--mcp-config <path>` | pi-mcp | Use a specific MCP configuration file |
+| `--plan` | Plannotator | Start in restricted planning mode |
 
 **Keyboard Shortcuts:**
 
@@ -295,6 +316,35 @@ All slash commands registered by extensions:
 | `Tab` | built-in | Cycle thinking levels |
 | `Space` | pi-skill-toggle | Toggle skill in the TUI |
 | `Ctrl+S` | pi-skill-toggle | Apply skill changes and reload |
+
+---
+
+## Verification
+
+Run the automated checks after changing extensions:
+
+```sh
+cd ~/.pi/agent
+
+# Top-level, ephemeral, and pi-cloak TypeScript checks
+pnpm exec tsc --noEmit --target ES2022 --module NodeNext \
+  --moduleResolution NodeNext --allowImportingTsExtensions \
+  --strict --skipLibCheck --types node \
+  extensions/*.ts extensions/ephemeral/*.ts extensions/pi-cloak/index.ts
+
+# Extension package checks
+npm --prefix extensions/web-tools run check
+npm --prefix extensions/save-md run check
+npm --prefix extensions/pi-skill-toggle run typecheck
+npm --prefix extensions/pi-skill-toggle test
+(cd extensions/pi-mcp && pnpm exec tsc --noEmit --module NodeNext \
+  --moduleResolution NodeNext --target ES2022 --strict --skipLibCheck src/*.ts)
+
+# Offline startup smoke test for all discovered extensions
+pi --offline --list-models >/dev/null
+```
+
+The package tests cover `web-tools`, `save-md`, and `pi-skill-toggle`. Type checking and the offline startup smoke test cover the remaining extension entry points. External integrations such as OAuth, browsers, Herdr, Zed, provider APIs, and git pushes still require environment-specific manual testing.
 
 ---
 

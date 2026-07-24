@@ -1,4 +1,4 @@
-import { complete, type Api, type Model, type UserMessage } from "@earendil-works/pi-ai";
+import { complete, type Api, type Model, type UserMessage } from "@earendil-works/pi-ai/compat";
 import {
   BorderedLoader,
   Theme,

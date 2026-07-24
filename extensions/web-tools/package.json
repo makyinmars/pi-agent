@@ -20,6 +20,9 @@
     "turndown-plugin-gfm": "^1.0.2"
   },
   "devDependencies": {
+    "@earendil-works/pi-ai": "^0.81.1",
+    "@earendil-works/pi-coding-agent": "^0.81.1",
+    "@earendil-works/pi-tui": "^0.81.1",
     "@types/node": "^24.5.2",
     "@types/turndown": "^5.0.5",
     "tsx": "^4.20.5",
