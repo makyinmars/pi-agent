@@ -17,6 +17,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 - [Extensions (Plugins)](#extensions-plugins)
 - [Commands (Controllers)](#commands-controllers)
 - [MCP Integration](#mcp-integration)
+- [Secret Masking (`cloak.json`)](#secret-masking-cloakjson)
 - [Themes](#themes)
 - [File Layout](#file-layout)
 
@@ -38,12 +39,11 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 3. **Install dependencies:**
    ```sh
    cd ~/.pi/agent && pnpm install
+   cd extensions/web-tools && npm install
+   cd extensions/pi-skill-toggle && npm install
+   cd extensions/save-md && npm install
    ```
-4. **(Optional) Web search:** If you want the Firecrawl web search tools, get a [Firecrawl API key](https://firecrawl.dev) and add it to `.env`:
-   ```sh
-   echo "FIRECRAWL_API_KEY=your-key-here" > ~/.pi/agent/.env
-   ```
-5. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
+4. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
 
 ---
 
@@ -109,30 +109,56 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 
 ### Extension Overview
 
-| File | Type | Description |
-|------|------|-------------|
-| [`firecrawl-search.ts`](extensions/firecrawl-search.ts) | Tools | Web search and page scraping via Firecrawl API |
-| [`diff.ts`](extensions/diff.ts) | Command + Event hooks | Tracks files changed during agent runs and opens them in Zed |
-| [`copy-all.ts`](extensions/copy-all.ts) | Command | Copies all conversation messages to clipboard |
-| [`flow-title.ts`](extensions/flow-title.ts) | UI Header + Command | Animated blue gradient ASCII "Pi" header with live model/project info |
-| [`git-status-widget.ts`](extensions/git-status-widget.ts) | UI Widget | Status bar widget showing current git branch and unstaged file count |
-| [`tps-tracker.ts`](extensions/tps-tracker.ts) | UI Status + Events | Tracks and displays tokens-per-second during model generation |
-| [`openai-codex-fast-mode.ts`](extensions/openai-codex-fast-mode.ts) | Event hooks | Enables OpenAI priority service tier for Codex models and shows a 🏎️ indicator |
-| [`update.ts`](extensions/update.ts) | Command + Flag | Updates Pi using the detected install method (vp, bun, npm, brew, or native) |
-| [`usage.ts`](extensions/usage.ts) | Command | Generates a detailed usage/cost report across 1/7/30/90 day windows |
-| [`yeet.ts`](extensions/yeet.ts) | Command | One-shot "add, commit, and push" with auto-generated commit messages |
-| [`lg.ts`](extensions/lg.ts) | Command | Summarizes unstaged git changes with per-file +/- line counts |
-| [`zsh-user-bash.ts`](extensions/zsh-user-bash.ts) | Event hook | Runs bash commands through zsh with proper shell configuration |
-| [`herdr-agent-state.ts`](extensions/herdr-agent-state.ts) | Event hooks | Reports agent state (working/blocked/idle) to Herdr via Unix socket |
+| File / Package | Type | Source | Description |
+|----------------|------|--------|-------------|
+| [`answer.ts`](extensions/answer.ts) | Command + TUI | dmmulroy | Interactive Q&A extractor — scans AI replies for questions, opens a TUI form to answer them |
+| [`continue-after-compaction.ts`](extensions/continue-after-compaction.ts) | Event hook | dmmulroy | Auto-resumes work after context compaction by reading the saved session and continuing |
+| [`whimsical.ts`](extensions/whimsical.ts) | UI + Event hooks | dmmulroy | Replaces the working spinner with random funny status messages |
+| [`herdr-agent-state.ts`](extensions/herdr-agent-state.ts) | Event hooks | Herdr | Reports agent state (working/blocked/idle) to Herdr via Unix socket |
+| [`diff.ts`](extensions/diff.ts) | Command + Event hooks | custom | Tracks files changed during agent runs and opens them in Zed |
+| [`copy-all.ts`](extensions/copy-all.ts) | Command | custom | Copies all conversation messages to clipboard |
+| [`flow-title.ts`](extensions/flow-title.ts) | UI Header + Command | custom | Animated blue gradient ASCII "Pi" header with live model/project info |
+| [`git-status-widget.ts`](extensions/git-status-widget.ts) | UI Widget | custom | Status bar widget showing current git branch and unstaged file count |
+| [`tps-tracker.ts`](extensions/tps-tracker.ts) | UI Status + Events | custom | Tracks and displays tokens-per-second during model generation |
+| [`openai-codex-fast-mode.ts`](extensions/openai-codex-fast-mode.ts) | Event hooks | custom | Enables OpenAI priority service tier for Codex models, shows 🏎️ indicator |
+| [`update.ts`](extensions/update.ts) | Command + Flag | custom | Updates Pi using the detected install method (vp, bun, npm, brew, or native) |
+| [`usage.ts`](extensions/usage.ts) | Command | custom | Generates a detailed usage/cost report across 1/7/30/90 day windows |
+| [`yeet.ts`](extensions/yeet.ts) | Command | custom | One-shot "add, commit, and push" with auto-generated commit messages |
+| [`lg.ts`](extensions/lg.ts) | Command | custom | Summarizes unstaged git changes with per-file +/- line counts |
+| [`zsh-user-bash.ts`](extensions/zsh-user-bash.ts) | Event hook | custom | Runs bash commands through zsh with proper shell configuration |
+| [`pi-cloak/`](extensions/pi-cloak/) | Tool hook | dmmulroy | Masks secrets in read tool output using `cloak.json` patterns |
+| [`pi-skill-toggle/`](extensions/pi-skill-toggle/) | Command + TUI | dmmulroy | Interactive TUI for toggling Pi skills on/off via frontmatter |
+| [`save-md/`](extensions/save-md/) | Command | dmmulroy | Saves the latest assistant response as a Markdown file |
+| [`web-tools/`](extensions/web-tools/) | Tools | dmmulroy | Web fetch and search tools with SSRF protection and Exa search |
+| [`pi-mcp/`](extensions/pi-mcp/) | Extension package | custom | MCP adapter with OAuth support for connecting to MCP servers |
+| [`ephemeral/`](extensions/ephemeral/) | Extension package | custom | Ephemeral patching system with catalog, project state, and TUI |
 
 ### Extension Details
 
-#### 🔥 `firecrawl-search.ts` — Web Search & Scrape Tools
-Registers two tools:
-- **`search`** — Searches the web via [Firecrawl](https://firecrawl.dev) with support for web, news, and image results. Can optionally scrape result pages for markdown content.
-- **`scrape`** — Fetches a single URL and returns cleaned markdown suitable for agent context.
+#### 💬 `answer.ts` — Interactive Q&A Extractor
+When you press `Ctrl+.` or type `/answer`:
+1. Finds the latest assistant message on the active session branch
+2. Uses a cheap model (gpt-5.5, falling back to Claude Haiku) to extract any unanswered questions
+3. Falls back to regex extraction if the model output is malformed
+4. Opens a custom interactive TUI questionnaire (Tab/Enter to advance, Shift+Tab to go back, Shift+Enter for newlines)
+5. Sends your answers as a follow-up message
 
-Requires `FIRECRAWL_API_KEY` in `.env` or environment.
+#### 🔄 `continue-after-compaction.ts` — Auto-Resume After Compaction
+Listens for `session_compact` events and automatically sends a continuation prompt instructing the model to:
+- Read the persisted JSONL session file
+- Follow `parentId` links to recover the original task, constraints, changes, tests, and next action
+- Reconcile with the current worktree and immediately continue
+
+#### 🎭 `whimsical.ts` — Funny Status Messages
+Replaces Pi's working indicator with random humorous messages on each turn, such as:
+- `Schlepping...`
+- `Tokenmaxxing...`
+- `Consulting the void...`
+- `Bribing the compiler...`
+- `Making illegal states unrepresentable...`
+
+#### 🤖 `herdr-agent-state.ts` — Herdr Integration
+Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix socket. Only activates when `HERDR_ENV=1` and `HERDR_SOCKET_PATH` are set.
 
 #### 📝 `diff.ts` — Changed File Tracker
 - Hooks into `agent_start`, `tool_result`, and `agent_end` events to track files modified during each agent run.
@@ -187,11 +213,42 @@ Requires `FIRECRAWL_API_KEY` in `.env` or environment.
 - Uses `zsh -fc` (non-interactive) to avoid powerlevel10k/gitstatus warnings.
 - Respects `PI_USER_BASH_SHELL` env var and `$SHELL` for custom shell paths.
 
-#### 🤖 `herdr-agent-state.ts` — Herdr Integration
-- Installed and managed by [Herdr](https://herdr.dev).
-- Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix socket.
-- Tracks session IDs and paths for Herdr's pane management.
-- Only activates when `HERDR_ENV=1` and `HERDR_SOCKET_PATH` are set.
+#### 🔒 `pi-cloak/` — Secret Masking
+Masks secrets in `read` tool output using patterns defined in [`cloak.json`](#secret-masking-cloakjson). Supports:
+- File glob matching (`**/*.env*`, `~/.pi/agent/auth.json`, etc.)
+- Regex-based value redaction with configurable replacement templates and cloak characters
+- Per-line processing and session-start config reload
+- `/cloak-status` command to check active patterns
+- Does **not** modify files — only transforms tool output before the model sees it
+
+#### 🎚️ `pi-skill-toggle/` — Skill Manager TUI
+Interactive TUI for toggling Pi skills on/off. Run `/toggle-skills` to:
+1. Scan skill directories (`~/.pi/agent/skills`, `~/.agents/skills`, project `.pi/skills`)
+2. See a searchable list with source, path, description, and current mode
+3. Press Space to toggle between `agent-invocable` and `manual-only`
+4. Press `Ctrl+S` to apply changes atomically and reload Pi
+
+#### 💾 `save-md/` — Save Assistant Response
+Run `/save-md <name>` to extract text from the AI's latest reply and save it as a Markdown file in the current directory. Refuses to overwrite existing files.
+
+#### 🌐 `web-tools/` — Web Fetch & Search
+Two tools with a strong security layer:
+
+- **`webfetch`** — Fetches a URL and returns Markdown, text, raw HTML, or inline images. HTML-to-Markdown pipeline uses LinkeDOM + Turndown/GFM with readability scoring.
+- **`websearch`** — Searches the web via [Exa](https://exa.ai) with normalized results (title, URL, snippet, date, score). 1–20 results, auto/fast/deep depth modes.
+
+Security features:
+- Blocks private/localhost IPs (full IPv4 + IPv6 range checks including loopback, link-local, CGNAT, ULA)
+- Rejects URLs with embedded credentials
+- Response size limiting (5 MiB max)
+- Manual redirect following with bounds (max 5)
+- DNS resolution checks against private ranges
+
+#### 🔌 `pi-mcp/` — MCP Adapter
+Full MCP (Model Context Protocol) adapter with OAuth support. Provides server management, tool registration, resource tools, UI panel, and consent management.
+
+#### 📦 `ephemeral/` — Ephemeral Patching System
+Patch application system with catalog, project state tracking, and TUI for browsing/applying patches.
 
 ---
 
@@ -201,19 +258,28 @@ All slash commands registered by extensions:
 
 | Command | Extension | Description |
 |---------|-----------|-------------|
-| `/search` | firecrawl-search | Search the web (tool, not command — auto-invoked by agent) |
-| `/scrape` | firecrawl-search | Scrape a URL (tool, not command — auto-invoked by agent) |
+| `/answer` | answer | Extract and answer questions from the AI's last reply (`Ctrl+.`) |
 | `/diff` | diff | Open changed files in Zed |
 | `/diff list` | diff | List changed files inline |
 | `/diff clear` | diff | Clear the changed file tracker |
 | `/copy-all` | copy-all | Copy all messages to clipboard |
 | `/flow-title` | flow-title | Enable the animated gradient header |
 | `/flow-title-builtin` | flow-title | Restore Pi's built-in header |
+| `/toggle-skills` | pi-skill-toggle | Open interactive skill toggle TUI |
+| `/save-md <name>` | save-md | Save the AI's last reply as a Markdown file |
+| `/cloak-status` | pi-cloak | Show active secret masking patterns |
 | `/update` | update | Update Pi to the latest version |
 | `/usage` | usage | Generate a usage/cost report |
 | `/yeet` | yeet | Add, commit, and push changes |
 | `/yeet <msg>` | yeet | Same with additional instructions |
 | `/lg` | lg | Summarize unstaged git changes |
+
+**Tools** (auto-invoked by the AI, not typed):
+
+| Tool | Extension | Description |
+|------|-----------|-------------|
+| `webfetch` | web-tools | Fetch a URL as markdown/text/images |
+| `websearch` | web-tools | Search the web via Exa |
 
 **Flags:**
 
@@ -221,44 +287,55 @@ All slash commands registered by extensions:
 |------|-----------|-------------|
 | `--update` | update | Run `/update` at session start |
 
+**Keyboard Shortcuts:**
+
+| Key | Extension | Description |
+|-----|-----------|-------------|
+| `Ctrl+.` | answer | Open the Q&A extractor |
+| `Tab` | built-in | Cycle thinking levels |
+| `Space` | pi-skill-toggle | Toggle skill in the TUI |
+| `Ctrl+S` | pi-skill-toggle | Apply skill changes and reload |
+
 ---
 
 ## MCP Integration
 
-The `extensions/pi-mcp/` directory contains a full MCP (Model Context Protocol) adapter with OAuth support. It's a forked and enhanced version of `pi-mcp-adapter` that provides:
+MCP servers are configured in `mcp.json` with proxy tool mode and lazy startup:
 
-- **Server management** — Connect to and manage MCP servers
-- **OAuth authentication** — Full OAuth flow for MCP servers that require it
-- **Tool registration** — Automatically registers MCP server tools as Pi tools
-- **Resource tools** — Exposes MCP resources as Pi tools
-- **UI panel** — In-TUI panel for managing MCP connections
-- **Consent management** — User consent flow for tool execution
+```json
+{
+  "mcp": {
+    "toolMode": "proxy",
+    "startup": "lazy",
+    "servers": { ... }
+  }
+}
+```
 
-Key files in `pi-mcp/src/`:
+The `extensions/pi-mcp/` directory contains a full MCP adapter with OAuth support for connecting to and managing MCP servers, registering their tools, and managing consent.
 
-| File | Purpose |
-|------|---------|
-| `index.ts` | Entry point — registers the MCP extension |
-| `server-manager.ts` | Manages MCP server lifecycle |
-| `mcp-auth.ts` / `mcp-oauth-provider.ts` | OAuth authentication flows |
-| `tool-registrar.ts` | Registers MCP tools as Pi tools |
-| `direct-tools.ts` | Direct tool execution |
-| `resource-tools.ts` | MCP resource exposure |
-| `ui-server.ts` / `ui-session.ts` | UI server for MCP management panel |
-| `consent-manager.ts` | User consent for tool calls |
-| `config.ts` | MCP server configuration |
-| `lifecycle.ts` | Server start/stop lifecycle |
+---
 
-The `extensions/ephemeral/` directory contains a separate ephemeral patching system:
+## Secret Masking (`cloak.json`)
 
-| File | Purpose |
-|------|---------|
-| `index.ts` | Entry point |
-| `catalog.ts` | Patch catalog |
-| `apply.ts` | Patch application logic |
-| `project-state.ts` | Tracks project patch state |
-| `ui.ts` | TUI for browsing/applying patches |
-| `manifest.ts` | Patch manifest types |
+The `cloak.json` file configures the `pi-cloak` extension to mask secrets in tool output. Patterns cover:
+
+- `.env` and `.vars` files — strips values after `=`
+- `auth.json` files — masks tokens, passwords, secrets
+- OpenCode JSON `apiKey` fields
+- TOML `token` fields
+- Cloudflare Access fields
+
+Example pattern:
+```json
+{
+  "filePattern": "**/*.env*",
+  "cloakPattern": "(=).+",
+  "replace": "$1"
+}
+```
+
+Run `/cloak-status` to see active patterns.
 
 ---
 
@@ -273,6 +350,8 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ```
 ~/.pi/agent/
 ├── settings.json          # Main configuration
+├── cloak.json             # Secret masking patterns for pi-cloak
+├── mcp.json               # MCP server configuration
 ├── .env                   # API keys (gitignored)
 ├── .env.example           # Template for .env
 ├── .gitignore             # Ignores sessions, auth, .env, node_modules
@@ -283,24 +362,27 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ├── assets/
 │   └── preview-maky.png   # Preview screenshot
 ├── extensions/
-│   ├── firecrawl-search.ts
-│   ├── diff.ts
-│   ├── copy-all.ts
-│   ├── flow-title.ts
-│   ├── git-status-widget.ts
-│   ├── tps-tracker.ts
-│   ├── openai-codex-fast-mode.ts
-│   ├── update.ts
-│   ├── usage.ts
-│   ├── yeet.ts
-│   ├── lg.ts
-│   ├── zsh-user-bash.ts
-│   ├── herdr-agent-state.ts
-│   ├── ephemeral/         # Ephemeral patching system
-│   └── pi-mcp/            # MCP adapter with OAuth
-│       ├── package.json
-│       ├── cli.js
-│       └── src/           # MCP source files
+│   ├── answer.ts          # Interactive Q&A extractor (Ctrl+.)
+│   ├── continue-after-compaction.ts  # Auto-resume after compaction
+│   ├── whimsical.ts       # Funny working status messages
+│   ├── herdr-agent-state.ts  # Herdr agent state reporting
+│   ├── diff.ts            # Changed file tracker + Zed opener
+│   ├── copy-all.ts        # Copy conversation to clipboard
+│   ├── flow-title.ts      # Animated gradient ASCII header
+│   ├── git-status-widget.ts  # Git branch + unstaged count widget
+│   ├── tps-tracker.ts     # Tokens-per-second tracker
+│   ├── openai-codex-fast-mode.ts  # OpenAI priority service tier
+│   ├── update.ts          # Self-updater
+│   ├── usage.ts           # Usage/cost report generator
+│   ├── yeet.ts            # Quick commit & push
+│   ├── lg.ts              # Unstaged git change summary
+│   ├── zsh-user-bash.ts   # Zsh shell integration
+│   ├── pi-cloak/          # Secret masking extension
+│   ├── pi-skill-toggle/   # Skill toggle TUI extension
+│   ├── save-md/           # Save response as Markdown
+│   ├── web-tools/         # Web fetch + search with SSRF protection
+│   ├── pi-mcp/            # MCP adapter with OAuth
+│   └── ephemeral/         # Ephemeral patching system
 ├── themes/                # Custom UI themes
 ├── sessions/              # Session storage (gitignored)
 └── npm/                   # NPM cache (gitignored)
@@ -308,13 +390,10 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 
 ---
 
-## License
-
-This is a personal configuration reference. No license is attached — use it as inspiration for your own Pi setup.
-
 ## Credits
 
 - [Pi](https://pi.dev) by Mario Zechner
-- [Firecrawl](https://firecrawl.dev) for web search
+- Extensions adapted from [dmmulroy/.dotfiles](https://github.com/dmmulroy/.dotfiles): `answer.ts`, `continue-after-compaction.ts`, `whimsical.ts`, `pi-cloak`, `pi-skill-toggle`, `save-md`, `web-tools`
 - [Herdr](https://herdr.dev) for agent state management
+- [Exa](https://exa.ai) for web search
 - [models.dev](https://models.dev) for pricing data
