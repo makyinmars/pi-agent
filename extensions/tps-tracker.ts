@@ -5,7 +5,7 @@
  * final TPS statistics at the end of each agent run.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 export default function (pi: ExtensionAPI) {
 	/** Timestamp when the current assistant message event started. Used as a fallback. */
@@ -100,6 +100,10 @@ export default function (pi: ExtensionAPI) {
 		const detail = theme.fg("dim", `${totalOutputTokens} tokens in ${elapsed.toFixed(1)}s streaming`);
 
 		ctx.ui.notify(`${icon} ${tpsLabel}  ${detail}`, "info");
-		ctx.ui.setStatus("tps", theme.fg("dim", `done — ${tpsLabel}`));
+		ctx.ui.setStatus("tps", undefined);
+	});
+
+	pi.on("session_shutdown", (_event, ctx) => {
+		ctx.ui.setStatus("tps", undefined);
 	});
 }

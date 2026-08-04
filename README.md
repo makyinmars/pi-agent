@@ -32,7 +32,10 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## Getting Started
 
-1. **Install Pi:** Visit <https://pi.dev> and follow the installation instructions.
+1. **Install Pi 0.83.0 or newer:**
+   ```sh
+   npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+   ```
 2. **Clone this repo** to `~/.pi/agent`:
    ```sh
    git clone https://github.com/makyinmars/pi-agent.git ~/.pi/agent
@@ -50,6 +53,13 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 After adding, removing, or changing an extension or skill, run `/reload` in existing Pi sessions.
 
+This checkout is aligned with Pi **0.83.0**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
+
+```sh
+pi update --all
+pi update --models
+```
+
 ---
 
 ## Configuration (`settings.json`)
@@ -58,7 +68,7 @@ The main configuration file is `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "lastChangelogVersion": "0.81.1",
+  "lastChangelogVersion": "0.83.0",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "high",
@@ -92,7 +102,7 @@ Pi supports configurable reasoning/effort levels. You can change them three ways
 |--------|-----|
 | **Config file** | Set `"defaultThinkingLevel"` in `settings.json` |
 | **CLI flag** | `pi --thinking high` |
-| **Keyboard (TUI)** | Press `Tab` to cycle through levels interactively |
+| **Keyboard (TUI)** | Press `Shift+Tab` to cycle through levels interactively |
 
 Valid levels (lowest to highest):
 
@@ -125,7 +135,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`flow-title.ts`](extensions/flow-title.ts) | UI Header + Command | custom | Animated blue gradient ASCII "Pi" header with live model/project info |
 | [`git-status-widget.ts`](extensions/git-status-widget.ts) | UI Widget | custom | Status bar widget showing current git branch and unstaged file count |
 | [`tps-tracker.ts`](extensions/tps-tracker.ts) | UI Status + Events | custom | Tracks and displays tokens-per-second during model generation |
-| [`openai-codex-fast-mode.ts`](extensions/openai-codex-fast-mode.ts) | Event hooks | custom | Enables OpenAI priority service tier for Codex models, shows 🏎️ indicator |
+| [`openai-codex-fast-mode.ts`](extensions/openai-codex-fast-mode.ts) | Command + Shortcut + Event hooks | custom | Controls OpenAI priority service tier with `/fast`, a compact badge, and 🏎️ animation |
 | [`update.ts`](extensions/update.ts) | Command + Flag | custom | Updates Pi using the detected install method (vp, bun, npm, brew, or native) |
 | [`usage.ts`](extensions/usage.ts) | Command | custom | Generates a detailed usage/cost report across 1/7/30/90 day windows |
 | [`yeet.ts`](extensions/yeet.ts) | Command | custom | One-shot "add, commit, and push" with auto-generated commit messages |
@@ -186,12 +196,15 @@ Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix s
 
 #### ⏱️ `tps-tracker.ts` — Tokens Per Second Tracker
 - Tracks tokens-per-second during model generation in real-time.
-- Shows live TPS in the status bar during generation.
-- Reports final TPS statistics (total tokens, streaming time) at the end of each agent run.
+- Shows live TPS only while generating, then clears the footer status to avoid stale results.
+- Reports final TPS statistics (total tokens, streaming time) as a notification at the end of each agent run.
 
 #### 🏎️ `openai-codex-fast-mode.ts` — Priority Mode
-- Intercepts `before_provider_request` events to set `service_tier: "priority"` on OpenAI Codex Responses API calls.
-- Patches the footer component to display a 🏎️ emoji next to the provider name when fast mode is active.
+- Intercepts `before_provider_request` events to set `service_tier: "priority"` on OpenAI Codex Responses API calls without overwriting an existing tier.
+- Supports `/fast on`, `/fast off`, and `/fast auto`; auto mode accelerates agent turns but leaves background summaries on the provider default.
+- Persists the selected mode within the session, including across `/reload`.
+- Shows a compact `🏎️ FAST` or `🏎️ AUTO` footer badge and animates the streaming indicator between `🏎️` and `🏎️ 💨`.
+- Toggles the selected enabled mode with `Ctrl+Shift+F`.
 
 #### 🔄 `update.ts` — Self-Updater
 - Registers `/update` command and `--update` flag.
@@ -274,6 +287,7 @@ All slash commands registered by extensions:
 | `/copy-all` | copy-all | Copy all messages to clipboard |
 | `/flow-title` | flow-title | Enable the animated gradient header |
 | `/flow-title-builtin` | flow-title | Restore Pi's built-in header |
+| `/fast [on\|off\|auto]` | openai-codex-fast-mode | Configure OpenAI Codex priority requests |
 | `/ephemeral` | ephemeral | Select project-local ephemeral resources |
 | `/mcp` | pi-mcp | Show MCP status, tools, or reconnect servers |
 | `/mcp-auth <server>` | pi-mcp | Authenticate an MCP server with OAuth |
@@ -313,7 +327,8 @@ All slash commands registered by extensions:
 | Key | Extension | Description |
 |-----|-----------|-------------|
 | `Ctrl+.` | answer | Open the Q&A extractor |
-| `Tab` | built-in | Cycle thinking levels |
+| `Ctrl+Shift+F` | openai-codex-fast-mode | Toggle the selected fast mode on/off |
+| `Shift+Tab` | built-in | Cycle thinking levels |
 | `Space` | pi-skill-toggle | Toggle skill in the TUI |
 | `Ctrl+S` | pi-skill-toggle | Apply skill changes and reload |
 
