@@ -82,8 +82,9 @@
     "thinkingMinimal": "fg4",
     "thinkingLow": "blue",
     "thinkingMedium": "aqua",
-    "thinkingHigh": "purple",
-    "thinkingXhigh": "red",
+    "thinkingHigh": "yellow",
+    "thinkingXhigh": "orange",
+    "thinkingMax": "red",
 
     "bashMode": "green"
   },

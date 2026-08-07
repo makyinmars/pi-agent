@@ -1,0 +1,5 @@
+{
+  "provider": "exa",
+  "exaApiKey": "$EXA_API_KEY",
+  "workflow": "none"
+}

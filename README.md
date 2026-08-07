@@ -32,7 +32,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## Getting Started
 
-1. **Install Pi 0.83.0 or newer:**
+1. **Install Pi 0.84.0 or newer:**
    ```sh
    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
    ```
@@ -49,11 +49,17 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
    npm --prefix extensions/save-md install
    pnpm --dir extensions/pi-mcp install
    ```
-4. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
+4. **Configure direct Exa search:**
+   ```sh
+   cp ~/.pi/agent/web-search.example.json ~/.pi/web-search.json
+   export EXA_API_KEY="your-exa-api-key"
+   ```
+   Persist `EXA_API_KEY` in your preferred shell or secret manager rather than committing it.
+5. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
 
 After adding, removing, or changing an extension or skill, run `/reload` in existing Pi sessions.
 
-This checkout is aligned with Pi **0.83.0**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
+This checkout is aligned with Pi **0.84.0**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
 
 ```sh
 pi update --all
@@ -68,13 +74,21 @@ The main configuration file is `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "lastChangelogVersion": "0.83.0",
+  "lastChangelogVersion": "0.84.0",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "high",
   "theme": "gruvbox-dark-hard",
-  "packages": ["npm:@plannotator/pi-extension"],
-  "hideThinkingBlock": true
+  "packages": [
+    "npm:@plannotator/pi-extension",
+    "npm:pi-web-access@0.18.0"
+  ],
+  "hideThinkingBlock": false,
+  "tuiMode": "fullscreen",
+  "fullscreenScrollbar": "auto",
+  "markdown": {
+    "mermaid": "streaming"
+  }
 }
 ```
 
@@ -86,6 +100,9 @@ The main configuration file is `~/.pi/agent/settings.json`:
 | `theme` | The UI theme to load from `themes/`. |
 | `packages` | NPM packages to load as Pi extensions. |
 | `hideThinkingBlock` | When `true`, hides the model's thinking/reasoning output in the TUI. |
+| `tuiMode` | Uses Pi's fullscreen TUI with a sticky editor/footer and independently scrollable transcript. |
+| `fullscreenScrollbar` | Controls fullscreen transcript scrollbar visibility (`auto`, `always`, or `hidden`). |
+| `markdown.mermaid` | Uses Pi's native Mermaid renderer (`off`, `final`, or `streaming`); no separate Mermaid extension is needed. |
 
 You can also override settings per-launch with CLI flags:
 ```sh
@@ -144,10 +161,11 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`pi-cloak/`](extensions/pi-cloak/) | Tool hook | dmmulroy | Masks secrets in read tool output using `cloak.json` patterns |
 | [`pi-skill-toggle/`](extensions/pi-skill-toggle/) | Command + TUI | dmmulroy | Interactive TUI for toggling Pi skills on/off via frontmatter |
 | [`save-md/`](extensions/save-md/) | Command | dmmulroy | Saves the latest assistant response as a Markdown file |
-| [`web-tools/`](extensions/web-tools/) | Tools | dmmulroy | Web fetch and search tools with SSRF protection and Exa search |
+| [`web-tools/`](extensions/web-tools/) | Tool | dmmulroy | Local web fetch tool with SSRF protection |
 | [`pi-mcp/`](extensions/pi-mcp/) | Extension package | custom | MCP adapter with OAuth support for connecting to MCP servers |
 | [`ephemeral/`](extensions/ephemeral/) | Extension package | custom | Ephemeral patching system with catalog, project state, and TUI |
 | [`@plannotator/pi-extension`](https://github.com/backnotprop/plannotator) | Package | third-party | Interactive plan review, response annotation, and code review |
+| [`pi-web-access`](https://github.com/nicobailon/pi-web-access) | Package | third-party | Direct Exa API search, source checking, and content extraction |
 
 ### Extension Details
 
@@ -250,18 +268,11 @@ Interactive TUI for toggling Pi skills on/off. Run `/toggle-skills` to:
 #### 💾 `save-md/` — Save Assistant Response
 Run `/save-md <name>` to extract text from the AI's latest reply and save it as a Markdown file in the current directory. Refuses to overwrite existing files.
 
-#### 🌐 `web-tools/` — Web Fetch & Search
-Two tools with a strong security layer:
+#### 🌐 `web-tools/` and `pi-web-access` — Web Access
 
-- **`webfetch`** — Fetches a URL and returns Markdown, text, raw HTML, or inline images. HTML-to-Markdown pipeline uses LinkeDOM + Turndown/GFM with readability scoring.
-- **`websearch`** — Searches the web via [Exa](https://exa.ai) with normalized results (title, URL, snippet, date, score). 1–20 results, auto/fast/deep depth modes.
+The local **`webfetch`** tool fetches a URL as Markdown, text, raw HTML, or an inline image. Its security layer blocks private addresses and URL credentials, bounds redirects and response size, and validates DNS results.
 
-Security features:
-- Blocks private/localhost IPs (full IPv4 + IPv6 range checks including loopback, link-local, CGNAT, ULA)
-- Rejects URLs with embedded credentials
-- Response size limiting (5 MiB max)
-- Manual redirect following with bounds (max 5)
-- DNS resolution checks against private ranges
+The pinned **`pi-web-access`** package provides `web_search`, `source_check`, `fetch_content`, and `get_search_content`. `~/.pi/web-search.json` selects Exa and resolves `exaApiKey` from `EXA_API_KEY`, forcing direct Exa API access rather than the zero-config MCP fallback. Search runs use `workflow: "none"` so headless subagents do not open the curator UI.
 
 #### 🔌 `pi-mcp/` — MCP Adapter
 Full MCP (Model Context Protocol) adapter with OAuth support. Provides server management, tool registration, resource tools, UI panel, and consent management.
@@ -309,8 +320,11 @@ All slash commands registered by extensions:
 
 | Tool | Extension | Description |
 |------|-----------|-------------|
-| `webfetch` | web-tools | Fetch a URL as markdown/text/images |
-| `websearch` | web-tools | Search the web via Exa |
+| `webfetch` | web-tools | Fetch a URL as Markdown/text/images |
+| `web_search` | pi-web-access | Search through the direct Exa API |
+| `source_check` | pi-web-access | Check claims against web sources |
+| `fetch_content` | pi-web-access | Extract content from URLs, repositories, PDFs, and videos |
+| `get_search_content` | pi-web-access | Retrieve bounded slices of stored search/fetch content |
 | `mcp` | pi-mcp | Discover, connect to, and call configured MCP servers |
 | `plannotator_submit_plan` | Plannotator | Submit a plan through the interactive review flow |
 
@@ -359,7 +373,7 @@ npm --prefix extensions/pi-skill-toggle test
 pi --offline --list-models >/dev/null
 ```
 
-The package tests cover `web-tools`, `save-md`, and `pi-skill-toggle`. Type checking and the offline startup smoke test cover the remaining extension entry points. External integrations such as OAuth, browsers, Herdr, Zed, provider APIs, and git pushes still require environment-specific manual testing.
+The package tests cover the local fetch implementation in `web-tools`, plus `save-md` and `pi-skill-toggle`. Type checking and the offline startup smoke test cover the remaining extension entry points. External integrations such as OAuth, browsers, Herdr, Zed, provider APIs, and git pushes still require environment-specific manual testing.
 
 ---
 
@@ -415,12 +429,14 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ```
 ~/.pi/agent/
 ├── settings.json          # Main configuration
+├── web-search.example.json # Direct Exa configuration template
 ├── cloak.json             # Secret masking patterns for pi-cloak
 ├── mcp.json               # MCP server configuration
 ├── .env                   # API keys (gitignored)
 ├── .env.example           # Template for .env
 ├── .gitignore             # Ignores sessions, auth, .env, node_modules
 ├── AGENTS.md              # Coding standards for agent-assisted work
+├── CHANGELOG.md           # Notable configuration changes
 ├── README.md              # This file
 ├── package.json           # NPM dependencies
 ├── pnpm-lock.yaml         # Lock file
@@ -445,7 +461,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 │   ├── pi-cloak/          # Secret masking extension
 │   ├── pi-skill-toggle/   # Skill toggle TUI extension
 │   ├── save-md/           # Save response as Markdown
-│   ├── web-tools/         # Web fetch + search with SSRF protection
+│   ├── web-tools/         # Local web fetch with SSRF protection
 │   ├── pi-mcp/            # MCP adapter with OAuth
 │   └── ephemeral/         # Ephemeral patching system
 ├── themes/                # Custom UI themes
@@ -459,6 +475,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 
 - [Pi](https://pi.dev) by Mario Zechner
 - Extensions adapted from [dmmulroy/.dotfiles](https://github.com/dmmulroy/.dotfiles): `answer.ts`, `continue-after-compaction.ts`, `whimsical.ts`, `pi-cloak`, `pi-skill-toggle`, `save-md`, `web-tools`
+- [pi-web-access](https://github.com/nicobailon/pi-web-access) for web search and content extraction
 - [Herdr](https://herdr.dev) for agent state management
 - [Exa](https://exa.ai) for web search
 - [models.dev](https://models.dev) for pricing data
