@@ -11,6 +11,8 @@ All notable changes to this Pi configuration are documented here.
 
 ### Changed
 
+- Aligned Pi development dependencies, extension lockfiles, and setup documentation with Pi 0.84.1.
+- Updated the Herdr integration to report state only for TUI sessions and preserve lifecycle authority across shutdowns.
 - Upgraded Pi development dependencies and extension lockfiles from 0.83 to 0.84.
 - Updated extension compatibility for nullable provider request headers.
 - Updated the default UI and thinking-level presentation.

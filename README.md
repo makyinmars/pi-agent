@@ -32,7 +32,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## Getting Started
 
-1. **Install Pi 0.84.0 or newer:**
+1. **Install Pi 0.84.1 or newer:**
    ```sh
    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
    ```
@@ -56,10 +56,11 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
    ```
    Persist `EXA_API_KEY` in your preferred shell or secret manager rather than committing it.
 5. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
+6. **Verify authentication:** Run `pi auth check --provider openai-codex --model gpt-5.6-sol --json` (adjust the provider/model if you changed the defaults).
 
 After adding, removing, or changing an extension or skill, run `/reload` in existing Pi sessions.
 
-This checkout is aligned with Pi **0.84.0**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
+This checkout is aligned with Pi **0.84.1**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
 
 ```sh
 pi update --all
@@ -74,7 +75,7 @@ The main configuration file is `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "lastChangelogVersion": "0.84.0",
+  "lastChangelogVersion": "0.84.1",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "high",
@@ -369,7 +370,8 @@ npm --prefix extensions/pi-skill-toggle test
 (cd extensions/pi-mcp && pnpm exec tsc --noEmit --module NodeNext \
   --moduleResolution NodeNext --target ES2022 --strict --skipLibCheck src/*.ts)
 
-# Offline startup smoke test for all discovered extensions
+# Authentication preflight and offline startup smoke test
+pi auth check --provider openai-codex --model gpt-5.6-sol --json
 pi --offline --list-models >/dev/null
 ```
 
