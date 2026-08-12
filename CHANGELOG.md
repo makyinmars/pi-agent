@@ -11,6 +11,8 @@ All notable changes to this Pi configuration are documented here.
 
 ### Changed
 
+- Expanded the README with subagent routing, watchdog controls, commands, tools, and shortcuts.
+- Refreshed the Pi setup preview image.
 - Ignored generated subagent artifacts, mission pointers, and run history.
 
 ## 2026-08-07

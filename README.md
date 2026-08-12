@@ -1,6 +1,6 @@
 # 🥧 Pi Agent Setup
 
-A personalized [Pi](https://pi.dev) AI coding agent configuration with custom extensions, commands, themes, and MCP integration.
+A personalized [Pi](https://pi.dev) AI coding agent configuration with custom extensions, role-routed subagents, commands, themes, and MCP integration.
 
 > **Disclaimer:** This is a personal setup, not a recommended configuration. It's a reference for what's possible with Pi's extension system.
 
@@ -14,6 +14,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 - [Getting Started](#getting-started)
 - [Configuration (`settings.json`)](#configuration-settingsjson)
 - [Thinking Levels / Effort](#thinking-levels--effort)
+- [Subagents and Automatic Review](#subagents-and-automatic-review)
 - [Extensions (Plugins)](#extensions-plugins)
 - [Commands (Controllers)](#commands-controllers)
 - [Verification](#verification)
@@ -82,13 +83,48 @@ The main configuration file is `~/.pi/agent/settings.json`:
   "theme": "gruvbox-dark-hard",
   "packages": [
     "npm:@plannotator/pi-extension",
-    "npm:pi-web-access@0.18.0"
+    "npm:pi-web-access@0.18.0",
+    "npm:pi-subagents"
   ],
   "hideThinkingBlock": false,
   "tuiMode": "fullscreen",
   "fullscreenScrollbar": "auto",
   "markdown": {
     "mermaid": "streaming"
+  },
+  "subagents": {
+    "defaultModel": "openai-codex/gpt-5.6-terra",
+    "defaultThinking": "medium",
+    "modelScope": {
+      "enforce": true,
+      "strict": true,
+      "allow": ["openai-codex/gpt-5.6-*"]
+    },
+    "agentOverrides": {
+      "scout": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "low",
+        "fallbackModels": ["openai-codex/gpt-5.6-terra"]
+      },
+      "reviewer": {
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "medium",
+        "fallbackModels": ["openai-codex/gpt-5.6-terra"]
+      },
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "high",
+        "fallbackModels": ["openai-codex/gpt-5.6-terra"]
+      }
+    },
+    "watchdog": {
+      "enabled": true,
+      "main": {
+        "enabled": true,
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "medium"
+      }
+    }
   }
 }
 ```
@@ -104,6 +140,11 @@ The main configuration file is `~/.pi/agent/settings.json`:
 | `tuiMode` | Uses Pi's fullscreen TUI with a sticky editor/footer and independently scrollable transcript. |
 | `fullscreenScrollbar` | Controls fullscreen transcript scrollbar visibility (`auto`, `always`, or `hidden`). |
 | `markdown.mermaid` | Uses Pi's native Mermaid renderer (`off`, `final`, or `streaming`); no separate Mermaid extension is needed. |
+| `subagents.defaultModel` | Default model for child agents without a more specific override. |
+| `subagents.defaultThinking` | Default child-agent reasoning level, independent of the parent session. |
+| `subagents.modelScope` | Strictly limits child models and fallbacks to the configured GPT-5.6 family. |
+| `subagents.agentOverrides` | Assigns role-specific models, thinking levels, and fallback models. |
+| `subagents.watchdog` | Enables adversarial review when repository edits are detected. |
 
 You can also override settings per-launch with CLI flags:
 ```sh
@@ -136,6 +177,32 @@ Valid levels (lowest to highest):
 
 ---
 
+## Subagents and Automatic Review
+
+The [`pi-subagents`](https://github.com/nicobailon/pi-subagents) package lets the parent Pi session delegate focused work to built-in child roles such as `scout`, `researcher`, `worker`, `reviewer`, `oracle`, and `delegate`. It supports single or parallel runs, background workflows, isolated worktrees, durable missions, fleet inspection, and acceptance-gated handoffs.
+
+This setup uses strict role-based routing:
+
+| Role | Primary route | Fallback | Intended use |
+|------|---------------|----------|--------------|
+| Roles without overrides | `gpt-5.6-terra` · medium | None configured | General child work |
+| `scout` | `gpt-5.6-luna` · low | `gpt-5.6-terra` | Fast codebase reconnaissance |
+| `reviewer` | `gpt-5.6-sol` · medium | `gpt-5.6-terra` | Focused change review |
+| `oracle` | `gpt-5.6-sol` · high | `gpt-5.6-terra` | High-stakes second opinions |
+
+All child routes are restricted to `openai-codex/gpt-5.6-*`. The main watchdog uses `gpt-5.6-sol` at medium thinking and reviews final repository edits at safe agent boundaries; ordinary conversation and unchanged diffs are skipped.
+
+[`subagent-review-mode.ts`](extensions/subagent-review-mode.ts) provides a persistent local toggle:
+
+- `/subagent-review` reports the current mode.
+- `/subagent-review on` and `/subagent-review off` update `settings.json`.
+- `Ctrl+Shift+R` toggles the mode.
+- `🕵️‍♂️` appears in the TUI status area while review is enabled.
+
+Generated fleet artifacts under `.pi/`, mission pointers under `missions/`, and `run-history.jsonl` are intentionally gitignored.
+
+---
+
 ## Extensions (Plugins)
 
 Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. They can register **tools**, **commands**, **UI widgets**, **event handlers**, and **flags**.
@@ -154,6 +221,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`git-status-widget.ts`](extensions/git-status-widget.ts) | UI Widget | custom | Status bar widget showing current git branch and unstaged file count |
 | [`tps-tracker.ts`](extensions/tps-tracker.ts) | UI Status + Events | custom | Tracks and displays tokens-per-second during model generation |
 | [`openai-codex-fast-mode.ts`](extensions/openai-codex-fast-mode.ts) | Command + Shortcut + Event hooks | custom | Controls OpenAI priority service tier with `/fast`, a compact badge, and 🏎️ animation |
+| [`subagent-review-mode.ts`](extensions/subagent-review-mode.ts) | Command + Shortcut + TUI | custom | Persistently toggles the pi-subagents watchdog and displays an enabled indicator |
 | [`update.ts`](extensions/update.ts) | Command + Flag | custom | Updates Pi using the detected install method (vp, bun, npm, brew, or native) |
 | [`usage.ts`](extensions/usage.ts) | Command | custom | Generates a detailed usage/cost report across 1/7/30/90 day windows |
 | [`yeet.ts`](extensions/yeet.ts) | Command | custom | One-shot "add, commit, and push" with auto-generated commit messages |
@@ -167,6 +235,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`ephemeral/`](extensions/ephemeral/) | Extension package | custom | Ephemeral patching system with catalog, project state, and TUI |
 | [`@plannotator/pi-extension`](https://github.com/backnotprop/plannotator) | Package | third-party | Interactive plan review, response annotation, and code review |
 | [`pi-web-access`](https://github.com/nicobailon/pi-web-access) | Package | third-party | Direct Exa API search, source checking, and content extraction |
+| [`pi-subagents`](https://github.com/nicobailon/pi-subagents) | Package | third-party | Delegates work to specialized child agents with workflows, fleet observability, and watchdog review |
 
 ### Extension Details
 
@@ -224,6 +293,12 @@ Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix s
 - Persists the selected mode within the session, including across `/reload`.
 - Shows a compact `🏎️ FAST` or `🏎️ AUTO` footer badge and animates the streaming indicator between `🏎️` and `🏎️ 💨`.
 - Toggles the selected enabled mode with `Ctrl+Shift+F`.
+
+#### 🕵️ `subagent-review-mode.ts` — Watchdog Toggle
+- Registers `/subagent-review [on|off]` and `Ctrl+Shift+R`.
+- Reads the current watchdog state from `settings.json` before reporting or toggling it.
+- Updates both the global and main-agent watchdog enable flags with an atomic temporary-file replacement.
+- Shows a `🕵️‍♂️` status indicator in TUI sessions while enabled.
 
 #### 🔄 `update.ts` — Self-Updater
 - Registers `/update` command and `--update` flag.
@@ -284,11 +359,14 @@ Patch application system with catalog, project state tracking, and TUI for brows
 #### 🗒️ `@plannotator/pi-extension` — Plan and Code Review
 Configured through `settings.json`. Adds interactive planning, assistant-response annotation, and code-review commands, plus the `plannotator_submit_plan` tool.
 
+#### 🧑‍🤝‍🧑 `pi-subagents` — Delegated Agent Workflows
+Configured through `settings.json`. Adds the `subagent` orchestration tool, built-in specialist roles, parallel and background workflows, fleet observability, durable missions, and an opt-in watchdog for adversarial review of repository edits.
+
 ---
 
 ## Commands (Controllers)
 
-All slash commands registered by extensions:
+Key slash commands registered by local and packaged extensions:
 
 | Command | Extension | Description |
 |---------|-----------|-------------|
@@ -300,6 +378,12 @@ All slash commands registered by extensions:
 | `/flow-title` | flow-title | Enable the animated gradient header |
 | `/flow-title-builtin` | flow-title | Restore Pi's built-in header |
 | `/fast [on\|off\|auto]` | openai-codex-fast-mode | Configure OpenAI Codex priority requests |
+| `/subagent-review [on\|off]` | subagent-review-mode | Report or persistently toggle watchdog review |
+| `/subagents-fleet` | pi-subagents | Open the live child-run inspector |
+| `/subagents-doctor` | pi-subagents | Check the subagent and intercom setup |
+| `/subagents-guide [topic]` | pi-subagents | Show installed-version guidance |
+| `/subagents-models [agent]` | pi-subagents | Inspect live role-to-model routing |
+| `/subagents-watchdog ...` | pi-subagents | Inspect or configure watchdog review |
 | `/ephemeral` | ephemeral | Select project-local ephemeral resources |
 | `/mcp` | pi-mcp | Show MCP status, tools, or reconnect servers |
 | `/mcp-auth <server>` | pi-mcp | Authenticate an MCP server with OAuth |
@@ -326,6 +410,8 @@ All slash commands registered by extensions:
 | `source_check` | pi-web-access | Check claims against web sources |
 | `fetch_content` | pi-web-access | Extract content from URLs, repositories, PDFs, and videos |
 | `get_search_content` | pi-web-access | Retrieve bounded slices of stored search/fetch content |
+| `subagent` | pi-subagents | Run, compose, inspect, and control delegated child-agent workflows |
+| `subagent_wait` | pi-subagents | Wait for required background child results |
 | `mcp` | pi-mcp | Discover, connect to, and call configured MCP servers |
 | `plannotator_submit_plan` | Plannotator | Submit a plan through the interactive review flow |
 
@@ -343,6 +429,7 @@ All slash commands registered by extensions:
 |-----|-----------|-------------|
 | `Ctrl+.` | answer | Open the Q&A extractor |
 | `Ctrl+Shift+F` | openai-codex-fast-mode | Toggle the selected fast mode on/off |
+| `Ctrl+Shift+R` | subagent-review-mode | Toggle persistent watchdog review on/off |
 | `Shift+Tab` | built-in | Cycle thinking levels |
 | `Space` | pi-skill-toggle | Toggle skill in the TUI |
 | `Ctrl+S` | pi-skill-toggle | Apply skill changes and reload |
@@ -436,7 +523,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ├── mcp.json               # MCP server configuration
 ├── .env                   # API keys (gitignored)
 ├── .env.example           # Template for .env
-├── .gitignore             # Ignores sessions, auth, .env, node_modules
+├── .gitignore             # Ignores secrets, dependencies, sessions, and subagent runtime data
 ├── AGENTS.md              # Coding standards for agent-assisted work
 ├── CHANGELOG.md           # Notable configuration changes
 ├── README.md              # This file
@@ -455,6 +542,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 │   ├── git-status-widget.ts  # Git branch + unstaged count widget
 │   ├── tps-tracker.ts     # Tokens-per-second tracker
 │   ├── openai-codex-fast-mode.ts  # OpenAI priority service tier
+│   ├── subagent-review-mode.ts  # Persistent watchdog review toggle
 │   ├── update.ts          # Self-updater
 │   ├── usage.ts           # Usage/cost report generator
 │   ├── yeet.ts            # Quick commit & push
@@ -478,6 +566,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 - [Pi](https://pi.dev) by Mario Zechner
 - Extensions adapted from [dmmulroy/.dotfiles](https://github.com/dmmulroy/.dotfiles): `answer.ts`, `continue-after-compaction.ts`, `whimsical.ts`, `pi-cloak`, `pi-skill-toggle`, `save-md`, `web-tools`
 - [pi-web-access](https://github.com/nicobailon/pi-web-access) for web search and content extraction
+- [pi-subagents](https://github.com/nicobailon/pi-subagents) for delegated agent workflows, fleet tooling, and watchdog review
 - [Herdr](https://herdr.dev) for agent state management
 - [Exa](https://exa.ai) for web search
 - [models.dev](https://models.dev) for pricing data
