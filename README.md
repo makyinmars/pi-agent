@@ -4,7 +4,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 > **Disclaimer:** This is a personal setup, not a recommended configuration. It's a reference for what's possible with Pi's extension system.
 
-![Pi setup preview](assets/preview-maky.png)
+![Pi setup preview](assets/preview-pi.png)
 
 ---
 
@@ -34,14 +34,19 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 ## Getting Started
 
 1. **Install Pi 0.84.1 or newer:**
+
    ```sh
    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
    ```
+
 2. **Clone this repo** to `~/.pi/agent`:
+
    ```sh
    git clone https://github.com/makyinmars/pi-agent.git ~/.pi/agent
    ```
+
 3. **Install dependencies:**
+
    ```sh
    cd ~/.pi/agent
    pnpm install
@@ -50,11 +55,14 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
    npm --prefix extensions/save-md install
    pnpm --dir extensions/pi-mcp install
    ```
+
 4. **Configure direct Exa search:**
+
    ```sh
    cp ~/.pi/agent/web-search.example.json ~/.pi/web-search.json
    export EXA_API_KEY="your-exa-api-key"
    ```
+
    Persist `EXA_API_KEY` in your preferred shell or secret manager rather than committing it.
 5. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
 6. **Verify authentication:** Run `pi auth check --provider openai-codex --model gpt-5.6-sol --json` (adjust the provider/model if you changed the defaults).
@@ -130,7 +138,7 @@ The main configuration file is `~/.pi/agent/settings.json`:
 ```
 
 | Key | Description |
-|-----|-------------|
+| ----- | ------------- |
 | `defaultProvider` | The AI provider to use (e.g., `openai-codex`, `google`, `anthropic`). |
 | `defaultModel` | The default model ID (e.g., `gpt-5.6-sol`). |
 | `defaultThinkingLevel` | Controls the reasoning/effort level. See [Thinking Levels](#thinking-levels--effort). |
@@ -147,6 +155,7 @@ The main configuration file is `~/.pi/agent/settings.json`:
 | `subagents.watchdog` | Enables adversarial review when repository edits are detected. |
 
 You can also override settings per-launch with CLI flags:
+
 ```sh
 pi --thinking high --model gpt-5.6-sol --provider openai-codex
 ```
@@ -158,7 +167,7 @@ pi --thinking high --model gpt-5.6-sol --provider openai-codex
 Pi supports configurable reasoning/effort levels. You can change them three ways:
 
 | Method | How |
-|--------|-----|
+| -------- | ----- |
 | **Config file** | Set `"defaultThinkingLevel"` in `settings.json` |
 | **CLI flag** | `pi --thinking high` |
 | **Keyboard (TUI)** | Press `Shift+Tab` to cycle through levels interactively |
@@ -166,7 +175,7 @@ Pi supports configurable reasoning/effort levels. You can change them three ways
 Valid levels (lowest to highest):
 
 | Level | Description |
-|-------|-------------|
+| ------- | ------------- |
 | `off` | No reasoning tokens |
 | `minimal` | Bare minimum thinking |
 | `low` | Light reasoning |
@@ -184,7 +193,7 @@ The [`pi-subagents`](https://github.com/nicobailon/pi-subagents) package lets th
 This setup uses strict role-based routing:
 
 | Role | Primary route | Fallback | Intended use |
-|------|---------------|----------|--------------|
+| ------ | --------------- | ---------- | -------------- |
 | Roles without overrides | `gpt-5.6-terra` · medium | None configured | General child work |
 | `scout` | `gpt-5.6-luna` · low | `gpt-5.6-terra` | Fast codebase reconnaissance |
 | `reviewer` | `gpt-5.6-sol` · medium | `gpt-5.6-terra` | Focused change review |
@@ -210,7 +219,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 ### Extension Overview
 
 | File / Package | Type | Source | Description |
-|----------------|------|--------|-------------|
+| ---------------- | ------ | -------- | ------------- |
 | [`answer.ts`](extensions/answer.ts) | Command + TUI | dmmulroy | Interactive Q&A extractor — scans AI replies for questions, opens a TUI form to answer them |
 | [`continue-after-compaction.ts`](extensions/continue-after-compaction.ts) | Event hook | dmmulroy | Auto-resumes work after context compaction by reading the saved session and continuing |
 | [`whimsical.ts`](extensions/whimsical.ts) | UI + Event hooks | dmmulroy | Replaces the working spinner with random funny status messages |
@@ -240,7 +249,9 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 ### Extension Details
 
 #### 💬 `answer.ts` — Interactive Q&A Extractor
+
 When you press `Ctrl+.` or type `/answer`:
+
 1. Finds the latest assistant message on the active session branch
 2. Uses a cheap model (gpt-5.5, falling back to Claude Haiku) to extract any unanswered questions
 3. Falls back to regex extraction if the model output is malformed
@@ -248,13 +259,17 @@ When you press `Ctrl+.` or type `/answer`:
 5. Sends your answers as a follow-up message
 
 #### 🔄 `continue-after-compaction.ts` — Auto-Resume After Compaction
+
 Listens for `session_compact` events and automatically sends a continuation prompt instructing the model to:
+
 - Read the persisted JSONL session file
 - Follow `parentId` links to recover the original task, constraints, changes, tests, and next action
 - Reconcile with the current worktree and immediately continue
 
 #### 🎭 `whimsical.ts` — Funny Status Messages
+
 Replaces Pi's working indicator with random humorous messages on each turn, such as:
+
 - `Schlepping...`
 - `Tokenmaxxing...`
 - `Consulting the void...`
@@ -262,32 +277,39 @@ Replaces Pi's working indicator with random humorous messages on each turn, such
 - `Making illegal states unrepresentable...`
 
 #### 🤖 `herdr-agent-state.ts` — Herdr Integration
+
 Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix socket. Only activates when `HERDR_ENV=1` and `HERDR_SOCKET_PATH` are set.
 
 #### 📝 `diff.ts` — Changed File Tracker
+
 - Hooks into `agent_start`, `tool_result`, and `agent_end` events to track files modified during each agent run.
 - Registers the `/diff` command to list and open changed files in [Zed](https://zed.dev).
 - Supports `/diff list` (inline listing) and `/diff clear` (reset tracking).
 
 #### 📋 `copy-all.ts` — Conversation Copier
+
 - Registers `/copy-all` to copy all user and assistant messages from the current session to the clipboard (via `pbcopy` on macOS).
 
 #### 🌊 `flow-title.ts` — Animated Gradient Header
+
 - Replaces Pi's default header with an animated blue gradient ASCII art "Pi" logo.
 - Shows the current model ID and project name in the subtitle.
 - Updates live on model selection changes.
 - Commands: `/flow-title` (enable) and `/flow-title-builtin` (restore default header).
 
 #### 📊 `git-status-widget.ts` — Git Status Widget
+
 - Displays a status bar widget with the current git branch and unstaged file count.
 - Polls every 2 seconds and refreshes on input and tool execution events.
 
 #### ⏱️ `tps-tracker.ts` — Tokens Per Second Tracker
+
 - Tracks tokens-per-second during model generation in real-time.
 - Shows live TPS only while generating, then clears the footer status to avoid stale results.
 - Reports final TPS statistics (total tokens, streaming time) as a notification at the end of each agent run.
 
 #### 🏎️ `openai-codex-fast-mode.ts` — Priority Mode
+
 - Intercepts `before_provider_request` events to set `service_tier: "priority"` on OpenAI Codex Responses API calls without overwriting an existing tier.
 - Supports `/fast on`, `/fast off`, and `/fast auto`; auto mode accelerates agent turns but leaves background summaries on the provider default.
 - Persists the selected mode within the session, including across `/reload`.
@@ -295,39 +317,47 @@ Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix s
 - Toggles the selected enabled mode with `Ctrl+Shift+F`.
 
 #### 🕵️ `subagent-review-mode.ts` — Watchdog Toggle
+
 - Registers `/subagent-review [on|off]` and `Ctrl+Shift+R`.
 - Reads the current watchdog state from `settings.json` before reporting or toggling it.
 - Updates both the global and main-agent watchdog enable flags with an atomic temporary-file replacement.
 - Shows a `🕵️‍♂️` status indicator in TUI sessions while enabled.
 
 #### 🔄 `update.ts` — Self-Updater
+
 - Registers `/update` command and `--update` flag.
 - Auto-detects the installation method (vite-plus, bun, npm, brew, or native binary).
 - Retries transient failures (timeouts, 429s, 502/503/504s) up to 3 times.
 - Reports before/after version numbers.
 
 #### 💰 `usage.ts` — Usage & Cost Report
+
 - Registers `/usage` command.
 - Sends a detailed prompt that makes the agent parse Pi session files and Codex CLI sessions to produce a markdown cost report.
 - Covers 1-day, 7-day, 30-day, and 90-day windows with per-model token counts and USD pricing from [models.dev](https://models.dev).
 
 #### 🚀 `yeet.ts` — Quick Commit & Push
+
 - Registers `/yeet` command.
 - Adds all changes, auto-generates a commit message, commits, and pushes to the current branch.
 - Handles upstream tracking setup and outputs remote/PR URLs.
 - Accepts additional instructions as arguments: `/yeet fix the typo in README`.
 
 #### 📈 `lg.ts` — Local Git Summary
+
 - Registers `/lg` command.
 - Sends a prompt that makes the agent summarize unstaged changes with per-file +/- line counts.
 
 #### 🐚 `zsh-user-bash.ts` — Zsh Shell Integration
+
 - Hooks into `user_bash` events to route bash commands through zsh.
 - Uses `zsh -fc` (non-interactive) to avoid powerlevel10k/gitstatus warnings.
 - Respects `PI_USER_BASH_SHELL` env var and `$SHELL` for custom shell paths.
 
 #### 🔒 `pi-cloak/` — Secret Masking
+
 Masks secrets in `read` tool output using patterns defined in [`cloak.json`](#secret-masking-cloakjson). Supports:
+
 - File glob matching (`**/*.env*`, `~/.pi/agent/auth.json`, etc.)
 - Regex-based value redaction with configurable replacement templates and cloak characters
 - Per-line processing and session-start config reload
@@ -335,13 +365,16 @@ Masks secrets in `read` tool output using patterns defined in [`cloak.json`](#se
 - Does **not** modify files — only transforms tool output before the model sees it
 
 #### 🎚️ `pi-skill-toggle/` — Skill Manager TUI
+
 Interactive TUI for toggling Pi skills on/off. Run `/toggle-skills` to:
+
 1. Scan skill directories (`~/.pi/agent/skills`, `~/.agents/skills`, project `.pi/skills`)
 2. See a searchable list with source, path, description, and current mode
 3. Press Space to toggle between `agent-invocable` and `manual-only`
 4. Press `Ctrl+S` to apply changes atomically and reload Pi
 
 #### 💾 `save-md/` — Save Assistant Response
+
 Run `/save-md <name>` to extract text from the AI's latest reply and save it as a Markdown file in the current directory. Refuses to overwrite existing files.
 
 #### 🌐 `web-tools/` and `pi-web-access` — Web Access
@@ -351,15 +384,19 @@ The local **`webfetch`** tool fetches a URL as Markdown, text, raw HTML, or an i
 The pinned **`pi-web-access`** package provides `web_search`, `source_check`, `fetch_content`, and `get_search_content`. `~/.pi/web-search.json` selects Exa and resolves `exaApiKey` from `EXA_API_KEY`, forcing direct Exa API access rather than the zero-config MCP fallback. Search runs use `workflow: "none"` so headless subagents do not open the curator UI.
 
 #### 🔌 `pi-mcp/` — MCP Adapter
+
 Full MCP (Model Context Protocol) adapter with OAuth support. Provides server management, tool registration, resource tools, UI panel, and consent management.
 
 #### 📦 `ephemeral/` — Ephemeral Patching System
+
 Patch application system with catalog, project state tracking, and TUI for browsing/applying patches.
 
 #### 🗒️ `@plannotator/pi-extension` — Plan and Code Review
+
 Configured through `settings.json`. Adds interactive planning, assistant-response annotation, and code-review commands, plus the `plannotator_submit_plan` tool.
 
 #### 🧑‍🤝‍🧑 `pi-subagents` — Delegated Agent Workflows
+
 Configured through `settings.json`. Adds the `subagent` orchestration tool, built-in specialist roles, parallel and background workflows, fleet observability, durable missions, and an opt-in watchdog for adversarial review of repository edits.
 
 ---
@@ -369,7 +406,7 @@ Configured through `settings.json`. Adds the `subagent` orchestration tool, buil
 Key slash commands registered by local and packaged extensions:
 
 | Command | Extension | Description |
-|---------|-----------|-------------|
+| --------- | ----------- | ------------- |
 | `/answer` | answer | Extract and answer questions from the AI's last reply (`Ctrl+.`) |
 | `/diff` | diff | Open changed files in Zed |
 | `/diff list` | diff | List changed files inline |
@@ -404,7 +441,7 @@ Key slash commands registered by local and packaged extensions:
 **Tools** (auto-invoked by the AI, not typed):
 
 | Tool | Extension | Description |
-|------|-----------|-------------|
+| ------ | ----------- | ------------- |
 | `webfetch` | web-tools | Fetch a URL as Markdown/text/images |
 | `web_search` | pi-web-access | Search through the direct Exa API |
 | `source_check` | pi-web-access | Check claims against web sources |
@@ -418,7 +455,7 @@ Key slash commands registered by local and packaged extensions:
 **Flags:**
 
 | Flag | Extension | Description |
-|------|-----------|-------------|
+| ------ | ----------- | ------------- |
 | `--update` | update | Run `/update` at session start |
 | `--mcp-config <path>` | pi-mcp | Use a specific MCP configuration file |
 | `--plan` | Plannotator | Start in restricted planning mode |
@@ -426,7 +463,7 @@ Key slash commands registered by local and packaged extensions:
 **Keyboard Shortcuts:**
 
 | Key | Extension | Description |
-|-----|-----------|-------------|
+| ----- | ----------- | ------------- |
 | `Ctrl+.` | answer | Open the Q&A extractor |
 | `Ctrl+Shift+F` | openai-codex-fast-mode | Toggle the selected fast mode on/off |
 | `Ctrl+Shift+R` | subagent-review-mode | Toggle persistent watchdog review on/off |
@@ -495,6 +532,7 @@ The `cloak.json` file configures the `pi-cloak` extension to mask secrets in too
 - Cloudflare Access fields
 
 Example pattern:
+
 ```json
 {
   "filePattern": "**/*.env*",
