@@ -6,6 +6,9 @@ tx9/jobs
 .env
 
 sessions
+.pi/
+missions/
+run-history.jsonl
 
 auth.json
 

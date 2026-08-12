@@ -2,6 +2,17 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## 2026-08-12
+
+### Added
+
+- Added `pi-subagents` with strict GPT-5.6 model routing, role-specific thinking levels, fallback models, and main-agent watchdog review.
+- Added a persistent `/subagent-review` command and `Ctrl+Shift+R` shortcut with a TUI status indicator.
+
+### Changed
+
+- Ignored generated subagent artifacts, mission pointers, and run history.
+
 ## 2026-08-07
 
 ### Added
