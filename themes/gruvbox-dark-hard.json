@@ -42,6 +42,9 @@
     "thinkingText": "fg4",
 
     "selectedBg": "bg2",
+    "scrollbarThumb": "bg3",
+    "searchMatchBg": "darkYellow",
+    "searchMatchText": "bg0Hard",
     "userMessageBg": "bg1",
     "userMessageText": "fg0",
     "customMessageBg": "bg1",

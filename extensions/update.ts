@@ -142,7 +142,10 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     if (!pi.getFlag("update")) return;
-    pi.sendUserMessage("/update", { deliverAs: "followUp" });
+    pi.sendUserMessage("/update", {
+      deliverAs: "followUp",
+      expandPromptTemplates: true,
+    });
     ctx.ui.notify("Queued /update from --update", "info");
   });
 }

@@ -33,7 +33,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## Getting Started
 
-1. **Install Pi 0.84.1 or newer:**
+1. **Install Pi 0.84.2 or newer:**
 
    ```sh
    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
@@ -69,7 +69,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 After adding, removing, or changing an extension or skill, run `/reload` in existing Pi sessions.
 
-This checkout is aligned with Pi **0.84.1**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
+This checkout is aligned with Pi **0.84.2**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
 
 ```sh
 pi update --all
@@ -84,14 +84,14 @@ The main configuration file is `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "lastChangelogVersion": "0.84.1",
+  "lastChangelogVersion": "0.84.2",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "high",
   "theme": "gruvbox-dark-hard",
   "packages": [
     "npm:@plannotator/pi-extension",
-    "npm:pi-web-access@0.18.0",
+    "npm:pi-web-access@0.22.0",
     "npm:pi-subagents"
   ],
   "hideThinkingBlock": false,
@@ -314,7 +314,7 @@ Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix s
 - Supports `/fast on`, `/fast off`, and `/fast auto`; auto mode accelerates agent turns but leaves background summaries on the provider default.
 - Persists the selected mode within the session, including across `/reload`.
 - Shows a compact `🏎️ FAST` or `🏎️ AUTO` footer badge and animates the streaming indicator between `🏎️` and `🏎️ 💨`.
-- Toggles the selected enabled mode with `Ctrl+Shift+F`.
+- Toggles the selected enabled mode with `Ctrl+Alt+F` (leaving Pi's fullscreen transcript search on `Ctrl+Shift+F`).
 
 #### 🕵️ `subagent-review-mode.ts` — Watchdog Toggle
 
@@ -465,7 +465,8 @@ Key slash commands registered by local and packaged extensions:
 | Key | Extension | Description |
 | ----- | ----------- | ------------- |
 | `Ctrl+.` | answer | Open the Q&A extractor |
-| `Ctrl+Shift+F` | openai-codex-fast-mode | Toggle the selected fast mode on/off |
+| `Ctrl+Shift+F` | built-in | Search the fullscreen transcript |
+| `Ctrl+Alt+F` | openai-codex-fast-mode | Toggle the selected fast mode on/off |
 | `Ctrl+Shift+R` | subagent-review-mode | Toggle persistent watchdog review on/off |
 | `Shift+Tab` | built-in | Cycle thinking levels |
 | `Space` | pi-skill-toggle | Toggle skill in the TUI |
