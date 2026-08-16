@@ -8,7 +8,7 @@ All notable changes to this Pi configuration are documented here.
 
 - Aligned Pi development dependencies and extension lockfiles with Pi 0.84.2.
 - Upgraded pinned `pi-web-access` from 0.18.0 to 0.22.0 for current Pi auth-header types, external bounded content caching, and cache path hardening.
-- Moved the OpenAI Codex fast-mode shortcut to `Ctrl+Alt+F` so Pi's fullscreen transcript search can use `Ctrl+Shift+F`.
+- Moved the OpenAI Codex fast-mode shortcut to `Ctrl+Shift+Alt+F`, preserving `Ctrl+Shift+F` for Pi's fullscreen transcript search and `Ctrl+Alt+F` for the pi-subagents fleet inspector.
 - Opted the `--update` extension flow into slash-command dispatch with `expandPromptTemplates`.
 - Added explicit Gruvbox colors for fullscreen scrollbars and transcript-search matches.
 

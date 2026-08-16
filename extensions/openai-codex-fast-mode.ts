@@ -8,7 +8,7 @@ const OPENAI_CODEX_PROVIDER = "openai-codex";
 const OPENAI_CODEX_RESPONSES_API = "openai-codex-responses";
 const FAST_MODE_STATUS_KEY = "openai-codex-fast-mode";
 const FAST_MODE_ENTRY_TYPE = "openai-codex-fast-mode";
-const FAST_MODE_SHORTCUT = "ctrl+alt+f";
+const FAST_MODE_SHORTCUT = "ctrl+shift+alt+f";
 const FAST_MODE_INDICATOR = {
   frames: ["🏎️   ", "🏎️ 💨"],
   intervalMs: 180,

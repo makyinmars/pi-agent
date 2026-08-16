@@ -314,7 +314,7 @@ Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix s
 - Supports `/fast on`, `/fast off`, and `/fast auto`; auto mode accelerates agent turns but leaves background summaries on the provider default.
 - Persists the selected mode within the session, including across `/reload`.
 - Shows a compact `🏎️ FAST` or `🏎️ AUTO` footer badge and animates the streaming indicator between `🏎️` and `🏎️ 💨`.
-- Toggles the selected enabled mode with `Ctrl+Alt+F` (leaving Pi's fullscreen transcript search on `Ctrl+Shift+F`).
+- Toggles the selected enabled mode with `Ctrl+Shift+Alt+F` (leaving the pi-subagents fleet inspector on `Ctrl+Alt+F` and Pi's fullscreen transcript search on `Ctrl+Shift+F`).
 
 #### 🕵️ `subagent-review-mode.ts` — Watchdog Toggle
 
@@ -466,7 +466,8 @@ Key slash commands registered by local and packaged extensions:
 | ----- | ----------- | ------------- |
 | `Ctrl+.` | answer | Open the Q&A extractor |
 | `Ctrl+Shift+F` | built-in | Search the fullscreen transcript |
-| `Ctrl+Alt+F` | openai-codex-fast-mode | Toggle the selected fast mode on/off |
+| `Ctrl+Alt+F` | pi-subagents | Open the live subagent fleet inspector |
+| `Ctrl+Shift+Alt+F` | openai-codex-fast-mode | Toggle the selected fast mode on/off |
 | `Ctrl+Shift+R` | subagent-review-mode | Toggle persistent watchdog review on/off |
 | `Shift+Tab` | built-in | Cycle thinking levels |
 | `Space` | pi-skill-toggle | Toggle skill in the TUI |
