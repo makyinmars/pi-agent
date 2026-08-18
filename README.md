@@ -91,7 +91,8 @@ The main configuration file is `~/.pi/agent/settings.json`:
   "packages": [
     "npm:@plannotator/pi-extension",
     "npm:pi-web-access@0.22.0",
-    "npm:pi-interview"
+    "npm:pi-interview",
+    "npm:@dietrichgebert/ponytail"
   ],
   "hideThinkingBlock": false,
   "tuiMode": "fullscreen",
@@ -178,6 +179,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`@plannotator/pi-extension`](https://github.com/backnotprop/plannotator) | Package | third-party | Interactive plan review, response annotation, and code review |
 | [`pi-web-access`](https://github.com/nicobailon/pi-web-access) | Package | third-party | Direct Exa API search, source checking, and content extraction |
 | [`pi-interview`](https://github.com/nicobailon/pi-interview-tool) | Tool | third-party | Opens an interactive form for structured clarification questions and rich responses |
+| [`@dietrichgebert/ponytail`](https://github.com/DietrichGebert/ponytail) | Package + Skills | third-party | Keeps coding changes minimal with reusable, standard-library, and native-platform solutions first |
 
 ### Extension Details
 
@@ -313,6 +315,10 @@ The pinned **`pi-web-access`** package provides `web_search`, `source_check`, `f
 
 Configured through `settings.json`. Adds the `interview` tool, which opens a native macOS window or browser form for single-choice, multi-choice, text, image, and rich-media questions.
 
+#### 🐎 `@dietrichgebert/ponytail` — Minimal Coding Mode
+
+Configured through `settings.json`. Applies a minimal-change coding workflow by default and provides skills for switching intensity, reviewing diffs or repositories for over-engineering, and tracking deliberate shortcuts.
+
 #### 🔌 `pi-mcp/` — MCP Adapter
 
 Full MCP (Model Context Protocol) adapter with OAuth support. Provides server management, tool registration, resource tools, UI panel, and consent management.
@@ -357,6 +363,12 @@ Key slash commands registered by local and packaged extensions:
 | `/plannotator-review` | Plannotator | Review current changes or a pull request |
 | `/plannotator-annotate` | Plannotator | Annotate a Markdown file or directory |
 | `/plannotator-last` | Plannotator | Annotate the latest assistant response |
+| `/ponytail [lite\|full\|ultra\|off]` | Ponytail | Set or report the minimal-coding intensity |
+| `/ponytail-review` | Ponytail | Review the current diff for over-engineering |
+| `/ponytail-audit` | Ponytail | Audit the repository for over-engineering |
+| `/ponytail-debt` | Ponytail | List deferred shortcuts marked with `ponytail:` comments |
+| `/ponytail-gain` | Ponytail | Show Ponytail's benchmark impact |
+| `/ponytail-help` | Ponytail | Show Ponytail command help |
 
 **Tools** (auto-invoked by the AI, not typed):
 
@@ -523,6 +535,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 - Extensions adapted from [dmmulroy/.dotfiles](https://github.com/dmmulroy/.dotfiles): `answer.ts`, `continue-after-compaction.ts`, `whimsical.ts`, `pi-cloak`, `pi-skill-toggle`, `save-md`, `web-tools`
 - [pi-web-access](https://github.com/nicobailon/pi-web-access) for web search and content extraction
 - [pi-interview](https://github.com/nicobailon/pi-interview-tool) for interactive clarification forms
+- [Ponytail](https://github.com/DietrichGebert/ponytail) for minimal-change coding guidance and over-engineering reviews
 - [Herdr](https://herdr.dev) for agent state management
 - [Exa](https://exa.ai) for web search
 - [models.dev](https://models.dev) for pricing data

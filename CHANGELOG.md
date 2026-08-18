@@ -7,6 +7,7 @@ All notable changes to this Pi configuration are documented here.
 ### Added
 
 - Added `pi-interview` for structured clarification forms with rich question and response types.
+- Added Ponytail for minimal-change coding guidance and over-engineering review skills.
 
 ### Changed
 

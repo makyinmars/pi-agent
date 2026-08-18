@@ -7,7 +7,8 @@
   "packages": [
     "npm:@plannotator/pi-extension",
     "npm:pi-web-access@0.22.0",
-    "npm:pi-interview"
+    "npm:pi-interview",
+    "npm:@dietrichgebert/ponytail"
   ],
   "hideThinkingBlock": false,
   "tuiMode": "fullscreen",
