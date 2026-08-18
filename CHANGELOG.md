@@ -2,28 +2,37 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## 2026-08-17
+
+### Added
+
+- Added `pi-interview` for structured clarification forms with rich question and response types.
+
+### Changed
+
+- Changed the default thinking level from `high` to `medium`.
+- Updated the README to match the active package, command, tool, shortcut, and file configuration.
+
+### Removed
+
+- Removed `pi-subagents`, its model routing and watchdog configuration, and generated runtime data.
+- Removed the local subagent review-mode extension, command, shortcut, and status indicator.
+
 ## 2026-08-14
 
 ### Changed
 
 - Aligned Pi development dependencies and extension lockfiles with Pi 0.84.2.
 - Upgraded pinned `pi-web-access` from 0.18.0 to 0.22.0 for current Pi auth-header types, external bounded content caching, and cache path hardening.
-- Moved the OpenAI Codex fast-mode shortcut to `Ctrl+Shift+Alt+F`, preserving `Ctrl+Shift+F` for Pi's fullscreen transcript search and `Ctrl+Alt+F` for the pi-subagents fleet inspector.
+- Moved the OpenAI Codex fast-mode shortcut to `Ctrl+Shift+Alt+F`, preserving `Ctrl+Shift+F` for Pi's fullscreen transcript search.
 - Opted the `--update` extension flow into slash-command dispatch with `expandPromptTemplates`.
 - Added explicit Gruvbox colors for fullscreen scrollbars and transcript-search matches.
 
 ## 2026-08-12
 
-### Added
-
-- Added `pi-subagents` with strict GPT-5.6 model routing, role-specific thinking levels, fallback models, and main-agent watchdog review.
-- Added a persistent `/subagent-review` command and `Ctrl+Shift+R` shortcut with a TUI status indicator.
-
 ### Changed
 
-- Expanded the README with subagent routing, watchdog controls, commands, tools, and shortcuts.
 - Refreshed the Pi setup preview image.
-- Ignored generated subagent artifacts, mission pointers, and run history.
 
 ## 2026-08-07
 
