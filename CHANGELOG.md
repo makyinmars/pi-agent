@@ -2,6 +2,16 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## 2026-08-25
+
+### Changed
+
+- Aligned Pi development dependencies and extension lockfiles with Pi 0.84.3.
+- Enabled cache-miss and compaction usage notices.
+- Configured fullscreen exit to restore the previous screen and print only the session resume hint.
+- Updated setup documentation for session-scoped model/thinking selection and explicit `Ctrl+S` persistence.
+- Simplified the self-update extension to delegate to Pi's built-in, safer `pi update` flow.
+
 ## 2026-08-17
 
 ### Added

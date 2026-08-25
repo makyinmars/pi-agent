@@ -32,7 +32,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## Getting Started
 
-1. **Install Pi 0.84.2 or newer:**
+1. **Install Pi 0.84.3 or newer:**
 
    ```sh
    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
@@ -68,7 +68,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 After adding, removing, or changing an extension or skill, run `/reload` in existing Pi sessions.
 
-This checkout is aligned with Pi **0.84.2**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
+This checkout is aligned with Pi **0.84.3**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
 
 ```sh
 pi update --all
@@ -83,7 +83,7 @@ The main configuration file is `~/.pi/agent/settings.json`:
 
 ```json
 {
-  "lastChangelogVersion": "0.84.2",
+  "lastChangelogVersion": "0.84.3",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "medium",
@@ -95,7 +95,9 @@ The main configuration file is `~/.pi/agent/settings.json`:
     "npm:@dietrichgebert/ponytail"
   ],
   "hideThinkingBlock": false,
+  "showCacheMissNotices": true,
   "tuiMode": "fullscreen",
+  "fullscreenExitOutput": "resume-hint",
   "fullscreenScrollbar": "auto",
   "markdown": {
     "mermaid": "streaming"
@@ -111,7 +113,9 @@ The main configuration file is `~/.pi/agent/settings.json`:
 | `theme` | The UI theme to load from `themes/`. |
 | `packages` | NPM packages to load as Pi extensions. |
 | `hideThinkingBlock` | When `true`, hides the model's thinking/reasoning output in the TUI. |
+| `showCacheMissNotices` | Shows significant cache-miss notices, including compaction and branch-summary usage. |
 | `tuiMode` | Uses Pi's fullscreen TUI with a sticky editor/footer and independently scrollable transcript. |
+| `fullscreenExitOutput` | Restores the previous screen and prints only a resume hint when fullscreen Pi exits. |
 | `fullscreenScrollbar` | Controls fullscreen transcript scrollbar visibility (`auto`, `always`, or `hidden`). |
 | `markdown.mermaid` | Uses Pi's native Mermaid renderer (`off`, `final`, or `streaming`); no separate Mermaid extension is needed. |
 
@@ -125,12 +129,13 @@ pi --thinking high --model gpt-5.6-sol --provider openai-codex
 
 ## Thinking Levels / Effort
 
-Pi supports configurable reasoning/effort levels. You can change them three ways:
+Pi supports configurable reasoning/effort levels. Model and thinking selector changes are session-scoped unless explicitly saved with `Ctrl+S`.
 
 | Method | How |
 | -------- | ----- |
 | **Config file** | Set `"defaultThinkingLevel"` in `settings.json` |
 | **CLI flag** | `pi --thinking high` |
+| **Selector** | Run `/thinking`; press `Ctrl+S` to save the choice globally |
 | **Keyboard (TUI)** | Press `Shift+Tab` to cycle through levels interactively |
 
 Valid levels (lowest to highest):
@@ -165,7 +170,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`git-status-widget.ts`](extensions/git-status-widget.ts) | UI Widget | custom | Status bar widget showing current git branch and unstaged file count |
 | [`tps-tracker.ts`](extensions/tps-tracker.ts) | UI Status + Events | custom | Tracks and displays tokens-per-second during model generation |
 | [`openai-codex-fast-mode.ts`](extensions/openai-codex-fast-mode.ts) | Command + Shortcut + Event hooks | custom | Controls OpenAI priority service tier with `/fast`, a compact badge, and 🏎️ animation |
-| [`update.ts`](extensions/update.ts) | Command + Flag | custom | Updates Pi using the detected install method (vp, bun, npm, brew, or native) |
+| [`update.ts`](extensions/update.ts) | Command + Flag | custom | Delegates updates to Pi's built-in updater and reports the version change |
 | [`usage.ts`](extensions/usage.ts) | Command | custom | Generates a detailed usage/cost report across 1/7/30/90 day windows |
 | [`yeet.ts`](extensions/yeet.ts) | Command | custom | One-shot "add, commit, and push" with auto-generated commit messages |
 | [`lg.ts`](extensions/lg.ts) | Command | custom | Summarizes unstaged git changes with per-file +/- line counts |
@@ -253,10 +258,9 @@ Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix s
 
 #### 🔄 `update.ts` — Self-Updater
 
-- Registers `/update` command and `--update` flag.
-- Auto-detects the installation method (vite-plus, bun, npm, brew, or native binary).
-- Retries transient failures (timeouts, 429s, 502/503/504s) up to 3 times.
-- Reports before/after version numbers.
+- Registers `/update` and the `--update` startup flag.
+- Delegates to Pi's built-in `pi update` flow so managed installs use staged, verified, atomic activation.
+- Reports the before/after version.
 
 #### 💰 `usage.ts` — Usage & Cost Report
 
@@ -354,7 +358,7 @@ Key slash commands registered by local and packaged extensions:
 | `/toggle-skills` | pi-skill-toggle | Open interactive skill toggle TUI |
 | `/save-md <name>` | save-md | Save the AI's last reply as a Markdown file |
 | `/cloak-status` | pi-cloak | Show active secret masking patterns |
-| `/update` | update | Update Pi to the latest version |
+| `/update` | update | Run Pi's built-in updater |
 | `/usage` | usage | Generate a usage/cost report |
 | `/yeet` | yeet | Add, commit, and push changes |
 | `/yeet <msg>` | yeet | Same with additional instructions |
@@ -387,7 +391,7 @@ Key slash commands registered by local and packaged extensions:
 
 | Flag | Extension | Description |
 | ------ | ----------- | ------------- |
-| `--update` | update | Run `/update` at session start |
+| `--update` | update | Queue `/update` at session start |
 | `--mcp-config <path>` | pi-mcp | Use a specific MCP configuration file |
 | `--plan` | Plannotator | Start in restricted planning mode |
 
@@ -511,7 +515,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 │   ├── git-status-widget.ts  # Git branch + unstaged count widget
 │   ├── tps-tracker.ts     # Tokens-per-second tracker
 │   ├── openai-codex-fast-mode.ts  # OpenAI priority service tier
-│   ├── update.ts          # Self-updater
+│   ├── update.ts          # Wrapper around Pi's built-in updater
 │   ├── usage.ts           # Usage/cost report generator
 │   ├── yeet.ts            # Quick commit & push
 │   ├── lg.ts              # Unstaged git change summary
