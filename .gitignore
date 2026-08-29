@@ -1,8 +1,6 @@
 node_modules
 **/node_modules/
 
-tx9/jobs
-
 .env
 
 sessions
@@ -13,11 +11,6 @@ auth.json
 models.json
 models-store.json
 settings.json
-mcp-cache.json
 
 npm/
 git/
-
-extensions/oc.ts
-
-extensions/tx9/

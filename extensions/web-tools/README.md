@@ -31,7 +31,7 @@ Behavior notes:
 
 ## Web search
 
-The pinned `pi-web-access` package supplies `web_search`, `source_check`, `fetch_content`, and `get_search_content`. The former local MCP search implementation has been removed.
+The pinned `pi-web-access` package supplies `web_search`, `source_check`, `fetch_content`, and `get_search_content`.
 
 Its configuration lives at `~/.pi/web-search.json` and selects Exa with `exaApiKey: "$EXA_API_KEY"`, which forces the direct Exa API whenever the environment variable is available.
 

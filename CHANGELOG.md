@@ -2,6 +2,21 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## 2026-08-29
+
+### Changed
+
+- Updated the README to match the remaining extensions, commands, verification steps, and file layout.
+- Corrected the documented Plannotator plan-mode command and preview image path.
+- Removed stale package metadata and ignore rules for integrations that are no longer present.
+
+### Removed
+
+- Removed the unused MCP adapter, its invalid server configuration, commands, tool, cache rule, dependencies, and documentation.
+- Removed the empty ephemeral resource catalog extension.
+- Removed duplicate `edit-article` and `handoff` skill symlinks; their canonical copies remain under `~/.agents/skills`.
+- Removed the placeholder root test script that always failed.
+
 ## 2026-08-25
 
 ### Changed

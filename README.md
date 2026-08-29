@@ -1,6 +1,6 @@
 # 🥧 Pi Agent Setup
 
-A personalized [Pi](https://pi.dev) AI coding agent configuration with custom extensions, commands, themes, and MCP integration.
+A personalized [Pi](https://pi.dev) AI coding agent configuration with custom extensions, commands, and themes.
 
 > **Disclaimer:** This is a personal setup, not a recommended configuration. It's a reference for what's possible with Pi's extension system.
 
@@ -17,7 +17,6 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 - [Extensions (Plugins)](#extensions-plugins)
 - [Commands (Controllers)](#commands-controllers)
 - [Verification](#verification)
-- [MCP Integration](#mcp-integration)
 - [Secret Masking (`cloak.json`)](#secret-masking-cloakjson)
 - [Themes](#themes)
 - [File Layout](#file-layout)
@@ -26,7 +25,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## What is Pi?
 
-[Pi](https://pi.dev) is a terminal-based AI coding assistant with read, bash, edit, and write tools. It supports a powerful extension system that lets you add custom tools, commands, UI widgets, event hooks, and MCP server integration — all via TypeScript files.
+[Pi](https://pi.dev) is a terminal-based AI coding assistant with read, bash, edit, and write tools. It supports a powerful extension system that lets you add custom tools, commands, UI widgets, and event hooks — all via TypeScript files.
 
 ---
 
@@ -52,7 +51,6 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
    npm --prefix extensions/web-tools install
    npm --prefix extensions/pi-skill-toggle install
    npm --prefix extensions/save-md install
-   pnpm --dir extensions/pi-mcp install
    ```
 
 4. **Configure direct Exa search:**
@@ -179,8 +177,6 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 | [`pi-skill-toggle/`](extensions/pi-skill-toggle/) | Command + TUI | dmmulroy | Interactive TUI for toggling Pi skills on/off via frontmatter |
 | [`save-md/`](extensions/save-md/) | Command | dmmulroy | Saves the latest assistant response as a Markdown file |
 | [`web-tools/`](extensions/web-tools/) | Tool | dmmulroy | Local web fetch tool with SSRF protection |
-| [`pi-mcp/`](extensions/pi-mcp/) | Extension package | custom | MCP adapter with OAuth support for connecting to MCP servers |
-| [`ephemeral/`](extensions/ephemeral/) | Extension package | custom | Ephemeral patching system with catalog, project state, and TUI |
 | [`@plannotator/pi-extension`](https://github.com/backnotprop/plannotator) | Package | third-party | Interactive plan review, response annotation, and code review |
 | [`pi-web-access`](https://github.com/nicobailon/pi-web-access) | Package | third-party | Direct Exa API search, source checking, and content extraction |
 | [`pi-interview`](https://github.com/nicobailon/pi-interview-tool) | Tool | third-party | Opens an interactive form for structured clarification questions and rich responses |
@@ -313,7 +309,7 @@ Run `/save-md <name>` to extract text from the AI's latest reply and save it as 
 
 The local **`webfetch`** tool fetches a URL as Markdown, text, raw HTML, or an inline image. Its security layer blocks private addresses and URL credentials, bounds redirects and response size, and validates DNS results.
 
-The pinned **`pi-web-access`** package provides `web_search`, `source_check`, `fetch_content`, and `get_search_content`. `~/.pi/web-search.json` selects Exa and resolves `exaApiKey` from `EXA_API_KEY`, forcing direct Exa API access rather than the zero-config MCP fallback. Search runs use `workflow: "none"` so they do not open the curator UI.
+The pinned **`pi-web-access`** package provides `web_search`, `source_check`, `fetch_content`, and `get_search_content`. `~/.pi/web-search.json` selects Exa and resolves `exaApiKey` from `EXA_API_KEY`, forcing direct Exa API access. Search runs use `workflow: "none"` so they do not open the curator UI.
 
 #### 🗣️ `pi-interview` — Interactive Interviews
 
@@ -322,14 +318,6 @@ Configured through `settings.json`. Adds the `interview` tool, which opens a nat
 #### 🐎 `@dietrichgebert/ponytail` — Minimal Coding Mode
 
 Configured through `settings.json`. Applies a minimal-change coding workflow by default and provides skills for switching intensity, reviewing diffs or repositories for over-engineering, and tracking deliberate shortcuts.
-
-#### 🔌 `pi-mcp/` — MCP Adapter
-
-Full MCP (Model Context Protocol) adapter with OAuth support. Provides server management, tool registration, resource tools, UI panel, and consent management.
-
-#### 📦 `ephemeral/` — Ephemeral Patching System
-
-Patch application system with catalog, project state tracking, and TUI for browsing/applying patches.
 
 #### 🗒️ `@plannotator/pi-extension` — Plan and Code Review
 
@@ -351,10 +339,6 @@ Key slash commands registered by local and packaged extensions:
 | `/flow-title` | flow-title | Enable the animated gradient header |
 | `/flow-title-builtin` | flow-title | Restore Pi's built-in header |
 | `/fast [on\|off\|auto]` | openai-codex-fast-mode | Configure OpenAI Codex priority requests |
-| `/ephemeral` | ephemeral | Select project-local ephemeral resources |
-| `/mcp` | pi-mcp | Show MCP status, tools, or reconnect servers |
-| `/mcp-auth <server>` | pi-mcp | Authenticate an MCP server with OAuth |
-| `/mcp-auth remove <server>` | pi-mcp | Remove stored MCP credentials |
 | `/toggle-skills` | pi-skill-toggle | Open interactive skill toggle TUI |
 | `/save-md <name>` | save-md | Save the AI's last reply as a Markdown file |
 | `/cloak-status` | pi-cloak | Show active secret masking patterns |
@@ -363,7 +347,7 @@ Key slash commands registered by local and packaged extensions:
 | `/yeet` | yeet | Add, commit, and push changes |
 | `/yeet <msg>` | yeet | Same with additional instructions |
 | `/lg` | lg | Summarize unstaged git changes |
-| `/plannotator` | Plannotator | Toggle interactive planning mode |
+| `/plannotator-plan-mode` | Plannotator | Toggle interactive planning mode |
 | `/plannotator-review` | Plannotator | Review current changes or a pull request |
 | `/plannotator-annotate` | Plannotator | Annotate a Markdown file or directory |
 | `/plannotator-last` | Plannotator | Annotate the latest assistant response |
@@ -384,7 +368,6 @@ Key slash commands registered by local and packaged extensions:
 | `fetch_content` | pi-web-access | Extract content from URLs, repositories, PDFs, and videos |
 | `get_search_content` | pi-web-access | Retrieve bounded slices of stored search/fetch content |
 | `interview` | pi-interview | Gather structured responses through an interactive form |
-| `mcp` | pi-mcp | Discover, connect to, and call configured MCP servers |
 | `plannotator_submit_plan` | Plannotator | Submit a plan through the interactive review flow |
 
 **Flags:**
@@ -392,7 +375,6 @@ Key slash commands registered by local and packaged extensions:
 | Flag | Extension | Description |
 | ------ | ----------- | ------------- |
 | `--update` | update | Queue `/update` at session start |
-| `--mcp-config <path>` | pi-mcp | Use a specific MCP configuration file |
 | `--plan` | Plannotator | Start in restricted planning mode |
 
 **Keyboard Shortcuts:**
@@ -415,44 +397,23 @@ Run the automated checks after changing extensions:
 ```sh
 cd ~/.pi/agent
 
-# Top-level, ephemeral, and pi-cloak TypeScript checks
+# Top-level and pi-cloak TypeScript checks
 pnpm exec tsc --noEmit --target ES2022 --module NodeNext \
   --moduleResolution NodeNext --allowImportingTsExtensions \
   --strict --skipLibCheck --types node \
-  extensions/*.ts extensions/ephemeral/*.ts extensions/pi-cloak/index.ts
+  extensions/*.ts extensions/pi-cloak/index.ts
 
 # Extension package checks
 npm --prefix extensions/web-tools run check
 npm --prefix extensions/save-md run check
 npm --prefix extensions/pi-skill-toggle run typecheck
 npm --prefix extensions/pi-skill-toggle test
-(cd extensions/pi-mcp && pnpm exec tsc --noEmit --module NodeNext \
-  --moduleResolution NodeNext --target ES2022 --strict --skipLibCheck src/*.ts)
-
 # Authentication preflight and offline startup smoke test
 pi auth check --provider openai-codex --model gpt-5.6-sol --json
 pi --offline --list-models >/dev/null
 ```
 
 The package tests cover the local fetch implementation in `web-tools`, plus `save-md` and `pi-skill-toggle`. Type checking and the offline startup smoke test cover the remaining extension entry points. External integrations such as OAuth, browsers, Herdr, Zed, provider APIs, and git pushes still require environment-specific manual testing.
-
----
-
-## MCP Integration
-
-MCP servers are configured in `mcp.json` with proxy tool mode and lazy startup:
-
-```json
-{
-  "mcp": {
-    "toolMode": "proxy",
-    "startup": "lazy",
-    "servers": { ... }
-  }
-}
-```
-
-The `extensions/pi-mcp/` directory contains a full MCP adapter with OAuth support for connecting to and managing MCP servers, registering their tools, and managing consent.
 
 ---
 
@@ -493,7 +454,6 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ├── settings.json          # Main configuration
 ├── web-search.example.json # Direct Exa configuration template
 ├── cloak.json             # Secret masking patterns for pi-cloak
-├── mcp.json               # MCP server configuration
 ├── .env                   # API keys (gitignored)
 ├── .env.example           # Template for .env
 ├── .gitignore             # Ignores secrets, dependencies, sessions, and runtime data
@@ -503,7 +463,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ├── package.json           # NPM dependencies
 ├── pnpm-lock.yaml         # Lock file
 ├── assets/
-│   └── preview-maky.png   # Preview screenshot
+│   └── preview-pi.png     # Preview screenshot
 ├── extensions/
 │   ├── answer.ts          # Interactive Q&A extractor (Ctrl+.)
 │   ├── continue-after-compaction.ts  # Auto-resume after compaction
@@ -523,9 +483,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 │   ├── pi-cloak/          # Secret masking extension
 │   ├── pi-skill-toggle/   # Skill toggle TUI extension
 │   ├── save-md/           # Save response as Markdown
-│   ├── web-tools/         # Local web fetch with SSRF protection
-│   ├── pi-mcp/            # MCP adapter with OAuth
-│   └── ephemeral/         # Ephemeral patching system
+│   └── web-tools/         # Local web fetch with SSRF protection
 ├── themes/                # Custom UI themes
 ├── sessions/              # Session storage (gitignored)
 └── npm/                   # NPM cache (gitignored)
