@@ -14,3 +14,7 @@ settings.json
 
 npm/
 git/
+
+mcp-auth.json
+mcp.log*
+crashes.json

@@ -122,12 +122,17 @@ export function createWebFetchTool(composition?: WebFetchToolComposition) {
 			result: { content: Array<{ type: string; text?: string }>; details?: WebFetchDetails; isError?: boolean },
 			options: { expanded: boolean; isPartial: boolean },
 			theme: RenderTheme,
+			context?: { durationMs?: number },
 		) {
 			if (options.isPartial) {
 				return new Text(theme.fg("warning", "Fetching..."), 0, 0);
 			}
+			const duration = context?.durationMs;
+			const timing = duration !== undefined && Number.isFinite(duration) && duration >= 0
+				? theme.fg("dim", ` · Took ${(duration / 1000).toFixed(2)}s`)
+				: "";
 			if (result.isError) {
-				return new Text(theme.fg("error", `✗ ${getTextContent(result.content) || "Fetch failed"}`), 0, 0);
+				return new Text(theme.fg("error", `✗ ${getTextContent(result.content) || "Fetch failed"}`) + timing, 0, 0);
 			}
 
 			const details = result.details;
@@ -144,6 +149,7 @@ export function createWebFetchTool(composition?: WebFetchToolComposition) {
 			if (details?.image) {
 				text += theme.fg("muted", " [image]");
 			}
+			text += timing;
 			text = appendExpandHint(text, options.expanded);
 
 			if (options.expanded) {

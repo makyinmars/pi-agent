@@ -9,6 +9,37 @@ import {
 	shouldRetryWithFallbackUserAgent,
 } from "../webfetch.ts";
 
+const renderTheme = {
+	fg: (_name: string, value: string) => value,
+	bold: (value: string) => value,
+};
+
+for (const isError of [false, true]) {
+	test(`webfetch renders recorded duration for ${isError ? "failed" : "successful"} results`, () => {
+		const tool = createWebFetchTool();
+		const result = { content: [{ type: "text", text: "Response" }], isError };
+		const rendered = tool.renderResult(result, { expanded: true, isPartial: false }, renderTheme, { durationMs: 1250 });
+		assert.match(rendered.render(100).join("\n"), /Took 1\.25s/);
+	});
+}
+
+test("webfetch omits timing for partial results and missing or invalid durations", () => {
+	const tool = createWebFetchTool();
+	const result = { content: [{ type: "text", text: "Response" }] };
+	for (const durationMs of [undefined, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+		const rendered = tool.renderResult(result, { expanded: true, isPartial: false }, renderTheme, { durationMs });
+		assert.doesNotMatch(rendered.render(100).join("\n"), /Took/);
+	}
+	const partial = tool.renderResult(result, { expanded: true, isPartial: true }, renderTheme, { durationMs: 1250 });
+	assert.doesNotMatch(partial.render(100).join("\n"), /Took/);
+});
+
+test("webfetch renders zero duration", () => {
+	const tool = createWebFetchTool();
+	const rendered = tool.renderResult({ content: [] }, { expanded: true, isPartial: false }, renderTheme, { durationMs: 0 });
+	assert.match(rendered.render(100).join("\n"), /Took 0\.00s/);
+});
+
 test("webfetch execute rejects URL credentials with a safe message", async () => {
 	const tool = createWebFetchTool();
 

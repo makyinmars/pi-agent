@@ -39,7 +39,7 @@ async function getUnstagedCount(cwd: string) {
 }
 
 async function updateWidget(ctx: ExtensionContext) {
-  if (!ctx.hasUI) return;
+  if (ctx.mode !== "tui") return;
 
   try {
     await runGit(["rev-parse", "--is-inside-work-tree"], ctx.cwd);
@@ -60,11 +60,14 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     if (interval) clearInterval(interval);
+    interval = undefined;
+    if (ctx.mode !== "tui") return;
 
     await updateWidget(ctx);
     interval = setInterval(() => {
       void updateWidget(ctx);
     }, UPDATE_INTERVAL_MS);
+    interval.unref();
   });
 
   pi.on("input", async (_event, ctx) => {
@@ -81,6 +84,6 @@ export default function (pi: ExtensionAPI) {
       clearInterval(interval);
       interval = undefined;
     }
-    if (ctx.hasUI) ctx.ui.setWidget(WIDGET_ID, undefined);
+    if (ctx.mode === "tui") ctx.ui.setWidget(WIDGET_ID, undefined);
   });
 }

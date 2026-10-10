@@ -2,6 +2,68 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## 2026-10-10
+
+### Changed
+
+- Aligned local Pi development dependencies and extension lockfiles with the installed Pi 1.1.0.
+- Updated the pinned `pi-web-access` package from 0.35.0 to 0.38.0.
+- Updated the root `brace-expansion` override to patched 5.0.12.
+- Restricted custom terminal headers, the git widget, `/answer`, and `/toggle-skills` to TUI mode; RPC's `hasUI` does not support custom terminal components.
+- Stopped the git widget from starting polling timers in headless modes and cleared stale header render callbacks on shutdown.
+- Added a root `pnpm run check` command for extension type checks and tests.
+- Added recorded `durationMs` display to custom `webfetch` results, with tests for successful, failed, partial, missing, invalid, and zero durations.
+- Added `docs/pi-features.md` with usage examples for built-in status reporting, tool filters, codemode image persistence, and project MCP overrides. Kept excluded models and local servers unconfigured, and documented why Codex ignores per-thinking-level sampling overrides.
+- Corrected image-persistence docs and documented automatic `~/.agents/skills` discovery.
+- Shortened the canonical Railway skill description in `~/.agents/skills/use-railway/SKILL.md` to meet Pi's 1024-character limit, without copying or relocating it. This skill file lives outside this repository.
+
+## 2026-10-03
+
+### Added
+
+- Enabled built-in `tool_search` alongside codemode for direct calls to discovered tools.
+- Enabled terminal-tab progress where the terminal supports it.
+- Set cache warming explicitly to `streaming`. Eligible caches refresh during active runs, not while idle.
+
+### Changed
+
+- Updated the README to match installed packages, MCP servers, and commands.
+- Documented built-in image generation and classifiers. Both use existing provider credentials without another extension.
+- Kept custom UI, secret masking, web fetch, and workflow extensions that provide distinct behavior.
+
+### Removed
+
+- Uninstalled `pi-interview` and `@plannotator/pi-extension` at the user's request.
+- Removed `update.ts`. Use the built-in shell command `pi update` instead.
+- Removed `continue-after-compaction.ts`. Pi handles automatic compaction continuation and recovery without an extra prompt after every compaction.
+- Removed stale README entries for Linear and Ponytail, which are not configured.
+
+## 2026-10-02
+
+### Added
+
+- Enabled Pi's built-in `codemode` tool with `"defaultTools": ["+codemode"]`.
+- Added `mcp.json` for Pi's built-in MCP support with `openai-docs`, `linear` (OAuth), and a disabled `paper` server, all using the default `codemode` exposure.
+- Added `assets/void.png`, copied from the Neovim dashboard, for the startup header.
+
+### Changed
+
+- Aligned Pi development dependencies and extension lockfiles with Pi 1.0.0.
+- Changed the default model from `gpt-5.6-sol` to `gpt-6.1-sol`, Pi's new OpenAI Codex default.
+- Set `quietStartup` to `"header"` so startup keeps the custom header but hides the model scope line and loaded-resource listing.
+- Replaced the blue "Pi" ASCII header with the Neovim dashboard's VOID art: the chafa-rendered image beside Gruvbox-yellow lettering, with a Gruvbox gradient subtitle. The image renders asynchronously, falls back to the lettering when `chafa` is missing, and stays within narrow terminal widths.
+- Ignored MCP OAuth credentials (`mcp-auth.json`), MCP logs, and crash reports.
+
+### Removed
+
+- Removed unused startup-listing helpers from `flow-title.ts`; `quietStartup: "header"` now hides the listing natively.
+
+## 2026-09-02
+
+### Changed
+
+- Aligned Pi development dependencies and extension lockfiles with Pi 0.84.4.
+
 ## 2026-08-29
 
 ### Changed

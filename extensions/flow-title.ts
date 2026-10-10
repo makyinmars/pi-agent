@@ -1,37 +1,58 @@
+import { execFile } from "node:child_process";
 import path from "node:path";
-import type {
-  ExtensionAPI,
-  ExtensionContext,
+import { promisify } from "node:util";
+import {
+  getAgentDir,
+  type ExtensionAPI,
+  type ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
+import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
+
+const execFileAsync = promisify(execFile);
 
 const RESET = "\x1b[0m";
 const BOLD = "\x1b[1m";
 
-const DEEP_BLUE: Rgb = [22, 83, 189];
-const BLUE: Rgb = [48, 129, 247];
-const SKY: Rgb = [93, 171, 255];
-const ICE: Rgb = [151, 205, 255];
-const PALETTE: Rgb[] = [DEEP_BLUE, BLUE, SKY, ICE, SKY, BLUE];
+// Gruvbox, matching the Neovim dashboard and the gruvbox-dark-hard theme.
+const YELLOW: Rgb = [215, 153, 33];
+const BRIGHT_YELLOW: Rgb = [250, 189, 47];
+const ORANGE: Rgb = [214, 93, 14];
+const BRIGHT_ORANGE: Rgb = [254, 128, 25];
+const PALETTE: Rgb[] = [
+  YELLOW,
+  BRIGHT_YELLOW,
+  BRIGHT_ORANGE,
+  ORANGE,
+  BRIGHT_ORANGE,
+  BRIGHT_YELLOW,
+];
 
 type Rgb = [number, number, number];
-type Renderable = {
-  render(width: number): string[];
-  invalidate?: () => void;
-};
-type RenderableContainer = Renderable & { children: Renderable[] };
-type TuiLike = RenderableContainer & { requestRender(force?: boolean): void };
 
-const ANSI_PATTERN =
-  /[\u001B\u009B][[\]()#;?]*(?:(?:(?:[a-zA-Z\d]*(?:;[a-zA-Z\d]*)*)?\u0007)|(?:(?:\d{1,4}(?:;\d{0,4})*)?[\dA-PR-TZcf-nq-uy=><~]))/g;
+// Same image and chafa size as the Neovim dashboard (~/.config/nvim/lua/plugins/snacks.lua).
+const IMAGE_PATH = path.join(getAgentDir(), "assets", "void.png");
+const IMAGE_SIZE = "35x17";
+const ART_GAP = "     ";
 
-const TITLE_LINES = [
-  "  ██████╗  ██╗ ",
-  "  ██╔══██╗ ██║ ",
-  "  ██████╔╝ ██║ ",
-  "  ██╔═══╝  ██║ ",
-  "  ██║      ██║ ",
-  "  ╚═╝      ╚═╝ ",
+// Same vertical lettering as ~/.config/nvim/assets/void.sh.
+const VOID_LINES = [
+  "█ █",
+  "█ █",
+  " ▀ ",
+  "",
+  "█▀█",
+  "█ █",
+  "▀▀▀",
+  "",
+  "▀█▀",
+  " █ ",
+  "▀█▀",
+  "",
+  "█▀▄",
+  "█ █",
+  "▀▀ ",
 ];
+const VOID_WIDTH = 3;
 
 function mix(a: number, b: number, t: number) {
   return Math.round(a + (b - a) * t);
@@ -52,81 +73,78 @@ function fg([r, g, b]: Rgb, text: string) {
   return `\x1b[38;2;${r};${g};${b}m${text}${RESET}`;
 }
 
-function gradientText(text: string, phase: number) {
+function gradientText(text: string) {
   const chars = [...text];
   const span = Math.max(chars.length - 1, 1);
   return chars
     .map((char, index) => {
       if (char === " ") return char;
-      return fg(sampleGradient(index / span + phase), char);
+      return fg(sampleGradient(index / span), char);
     })
     .join("");
 }
 
-function center(text: string, width: number) {
-  const length = [...text].length;
-  if (length >= width) return text;
-  return `${" ".repeat(Math.floor((width - length) / 2))}${text}`;
+function leftPad(contentWidth: number, width: number) {
+  return " ".repeat(Math.max(Math.floor((width - contentWidth) / 2), 0));
 }
 
 function projectName() {
   return path.basename(process.cwd()) || "session";
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isRenderable(value: unknown): value is Renderable {
-  return isRecord(value) && typeof value.render === "function";
-}
-
-function isRenderableContainer(value: unknown): value is RenderableContainer {
-  return isRenderable(value) && Array.isArray(value.render);
-}
-
-function withoutAnsi(text: string) {
-  return text.replace(ANSI_PATTERN, "");
-}
-
-function renderedText(component: Renderable) {
+async function loadImageLines() {
   try {
-    return withoutAnsi(component.render(120).join("\n"));
+    const { stdout } = await execFileAsync(
+      "chafa",
+      [
+        IMAGE_PATH,
+        "--format=symbols",
+        `--size=${IMAGE_SIZE}`,
+        "--colors=full",
+        "--polite=on",
+      ],
+      { timeout: 5_000, maxBuffer: 1024 * 1024 },
+    );
+    return stdout.trimEnd().split("\n");
   } catch {
-    return "";
+    // chafa missing or failed: render the VOID lettering alone.
+    return [];
   }
 }
 
-function hasSectionHeader(text: string, header: string) {
-  return text.split("\n").some((line) => line.trim() === header);
+function renderArt(width: number, imageLines: string[] | undefined) {
+  // Still loading: render nothing so the lettering doesn't jump once the image arrives.
+  if (!imageLines) return [];
+
+  const imageWidth = Math.max(0, ...imageLines.map(visibleWidth));
+  const artWidth =
+    imageWidth > 0 ? imageWidth + ART_GAP.length + VOID_WIDTH : VOID_WIDTH;
+  if (artWidth > width) return [];
+
+  const pad = leftPad(artWidth, width);
+  const rows = Math.max(imageLines.length, VOID_LINES.length);
+  return Array.from({ length: rows }, (_, row) => {
+    const letters = fg(YELLOW, VOID_LINES[row] ?? "");
+    if (imageWidth === 0) return `${pad}${letters}`;
+
+    const image = imageLines[row] ?? "";
+    const imagePad = " ".repeat(imageWidth - visibleWidth(image));
+    return `${pad}${image}${RESET}${imagePad}${ART_GAP}${letters}`;
+  });
 }
 
-function isHiddenStartupListing(component: Renderable) {
-  const text = renderedText(component);
-  const isThemesListing =
-    hasSectionHeader(text, "[Themes]") &&
-    (text.includes("/themes/") || text.includes(".pi/agent/themes"));
-  const isExtensionsListing =
-    hasSectionHeader(text, "[Extensions]") &&
-    (text.includes("/extensions/") || text.includes(".pi/agent/extensions"));
-
-  return isThemesListing || isExtensionsListing;
-}
-
-function isBlankSpacer(component: Renderable) {
-  return renderedText(component).trim() === "";
-}
-
-function renderHeader(width: number, phase: number, subtitleText: string) {
-  const lines = TITLE_LINES.map((line, row) =>
-    gradientText(center(line, width), phase + row * 0.045),
-  );
-  const subtitle = center(subtitleText, width);
+function renderHeader(
+  width: number,
+  imageLines: string[] | undefined,
+  subtitleText: string,
+) {
+  const centered = `${leftPad(visibleWidth(subtitleText), width)}${subtitleText}`;
 
   return [
     "",
-    ...lines,
-    `${BOLD}${gradientText(subtitle, phase + 0.18)}${RESET}`,
+    ...renderArt(width, imageLines),
+    "",
+    truncateToWidth(`${BOLD}${gradientText(centered)}${RESET}`, width),
     "",
   ];
 }
@@ -134,13 +152,26 @@ function renderHeader(width: number, phase: number, subtitleText: string) {
 export default function (pi: ExtensionAPI) {
   let requestRender: (() => void) | undefined;
   let currentModelId = "no model selected";
+  let imageLines: string[] | undefined;
+  let imageLoad: Promise<void> | undefined;
 
   function installHeader(ctx: ExtensionContext) {
+    if (ctx.mode !== "tui") return;
+
+    imageLoad ??= loadImageLines().then((lines) => {
+      imageLines = lines;
+      requestRender?.();
+    });
+
     ctx.ui.setHeader((tui) => {
       requestRender = () => tui.requestRender();
       return {
         render(width: number) {
-          return renderHeader(width, 0, `${currentModelId} · ${projectName()}`);
+          return renderHeader(
+            width,
+            imageLines,
+            `${currentModelId} · ${projectName()}`,
+          );
         },
         invalidate() {
           tui.requestRender();
@@ -151,7 +182,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", (_event, ctx) => {
     currentModelId = ctx.model?.id ?? "no model selected";
-    if (!ctx.hasUI) return;
+    if (ctx.mode !== "tui") return;
     installHeader(ctx);
   });
 
@@ -161,14 +192,15 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("session_shutdown", (_event, ctx) => {
-    if (ctx.hasUI) ctx.ui.setHeader(undefined);
+    requestRender = undefined;
+    if (ctx.mode === "tui") ctx.ui.setHeader(undefined);
   });
 
   pi.registerCommand("flow-title", {
-    description: "Enable the blue flowing gradient session header",
+    description: "Enable the VOID session header from the Neovim dashboard",
     handler: async (_args, ctx) => {
       installHeader(ctx);
-      ctx.ui.notify("Flow title enabled", "info");
+      ctx.ui.notify("VOID header enabled", "info");
     },
   });
 

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "openai-docs": {
+      "url": "https://developers.openai.com/mcp",
+      "description": "Search and read the OpenAI developer documentation"
+    },
+    "paper": {
+      "url": "http://127.0.0.1:29979/mcp",
+      "description": "Read and edit designs in the local Paper app",
+      "enabled": false
+    }
+  }
+}
