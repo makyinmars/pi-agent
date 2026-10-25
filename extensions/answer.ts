@@ -1,4 +1,4 @@
-import { complete, type Api, type Model, type UserMessage } from "@earendil-works/pi-ai/compat";
+import type { UserMessage } from "@earendil-works/pi-ai";
 import {
   BorderedLoader,
   Theme,
@@ -65,7 +65,7 @@ interface ExtractionModelPreference {
 }
 
 const EXTRACTION_MODEL_PREFERENCES: readonly ExtractionModelPreference[] = [
-  { provider: "openai-codex", modelId: "gpt-5.5" },
+  { provider: "openai-codex", modelId: "gpt-6.1-sol" },
   { provider: "anthropic", modelId: "claude-haiku-4-5" },
 ];
 
@@ -184,24 +184,13 @@ function findLastCompletedAssistantMessage(ctx: ExtensionContext): {
   return { skippedIncomplete };
 }
 
-async function selectExtractionModel(
-  modelRegistry: {
-    find: (provider: string, modelId: string) => Model<Api> | undefined;
-    getApiKeyAndHeaders: (model: Model<Api>) => Promise<
-      | { ok: true; apiKey?: string; headers?: Record<string, string | null>; }
-      | { ok: false; error: string; }
-    >;
-  },
+function selectExtractionModel(
+  modelRegistry: ExtensionContext["modelRegistry"],
   preferences: readonly ExtractionModelPreference[],
-): Promise<Model<Api> | undefined> {
+) {
   for (const candidate of preferences) {
     const model = modelRegistry.find(candidate.provider, candidate.modelId);
-    if (!model) continue;
-
-    const auth = await modelRegistry.getApiKeyAndHeaders(model);
-    if (auth.ok) {
-      return model;
-    }
+    if (model && modelRegistry.hasConfiguredAuth(model)) return model;
   }
 
   return undefined;
@@ -490,10 +479,10 @@ export default function (pi: ExtensionAPI) {
     }
 
     const extractionModelPreferences = EXTRACTION_MODEL_PREFERENCES;
-    const extractionModel = await selectExtractionModel(ctx.modelRegistry, extractionModelPreferences);
+    const extractionModel = selectExtractionModel(ctx.modelRegistry, extractionModelPreferences);
     if (!extractionModel) {
       ctx.ui.notify(
-        `No configured extraction model is available with a configured API key. Checked: ${formatExtractionModelPreferences(extractionModelPreferences)}`,
+        `No extraction model has configured credentials. Checked: ${formatExtractionModelPreferences(extractionModelPreferences)}`,
         "error",
       );
       return;
@@ -507,54 +496,37 @@ export default function (pi: ExtensionAPI) {
       );
       loader.onAbort = () => done({ type: "cancelled" });
 
-      const doExtract = async () => {
-        const auth = await ctx.modelRegistry.getApiKeyAndHeaders(extractionModel);
-        if (!auth.ok) {
-          const authError = "error" in auth ? auth.error : "Unknown auth error";
-          return {
-            type: "error",
-            message: `No auth available for ${extractionModel.provider}/${extractionModel.id}: ${authError}`,
-          } as ExtractionOutcome;
-        }
-
+      // The union annotation preserves literal discriminants across async branches.
+      const doExtract = async (): Promise<ExtractionOutcome> => {
         const userMessage: UserMessage = {
           role: "user",
           content: [{ type: "text", text: lastAssistantText }],
           timestamp: Date.now(),
         };
 
-        const response = await complete(
+        const response = await ctx.modelRegistry.streamSimple(
           extractionModel,
           { systemPrompt: SYSTEM_PROMPT, messages: [userMessage] },
-          {
-            apiKey: auth.apiKey,
-            headers: auth.headers,
-            signal: loader.signal,
-            ...(extractionModel.provider === "openai-codex" ? { reasoningEffort: "none" } : {}),
-          },
-        );
+          { signal: loader.signal },
+        ).result();
 
         if (response.stopReason === "aborted") {
-          return { type: "cancelled" } as ExtractionOutcome;
+          return { type: "cancelled" };
+        }
+        if (response.stopReason === "error") {
+          return { type: "error", message: response.errorMessage || "Question extraction failed." };
         }
 
         const responseText = getTextParts(response.content).join("\n").trim();
         if (!responseText) {
-          const fallback = fallbackExtractQuestions(lastAssistantText);
-          return {
-            type: "success",
-            result: fallback,
-          } as ExtractionOutcome;
+          return { type: "success", result: fallbackExtractQuestions(lastAssistantText) };
         }
 
         const parsed = parseExtractionResult(responseText);
         if (parsed.type === "error") {
           const fallback = fallbackExtractQuestions(lastAssistantText);
           if (fallback.questions.length > 0) {
-            return {
-              type: "success",
-              result: fallback,
-            } as ExtractionOutcome;
+            return { type: "success", result: fallback };
           }
         }
 
@@ -610,12 +582,8 @@ export default function (pi: ExtensionAPI) {
     handler: async (_args, ctx) => answerHandler(ctx),
   });
 
-
-
   pi.registerShortcut("ctrl+.", {
     description: "Extract and answer questions",
     handler: answerHandler,
   });
-
-
 }

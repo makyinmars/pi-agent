@@ -2,6 +2,20 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## 2026-10-25
+
+### Changed
+
+- Verified installed Pi 1.4.0 against the latest npm release and aligned all local Pi development dependencies and lockfiles with it.
+- Updated pinned `pi-web-access` from 0.38.0 to 0.44.0 and refreshed model catalogs.
+- Replaced `/answer`’s unavailable Codex `gpt-5.5` preference with `gpt-6.1-sol`; kept Haiku 4.5 as the credential fallback. Routed extraction through Pi’s authenticated, provider-neutral model runtime and surfaced provider errors instead of treating them as malformed output.
+- Added published schema references for settings and the Gruvbox theme, replacing the theme’s obsolete source-schema URL.
+- Pinned patched `undici` 8.12.3 across local package trees and root `zod` 4.x to 4.6.7; refreshed vulnerable transitive dependencies, including the gitignored managed-package cache, without downgrading Pi or forcing major upgrades.
+- Added offline tests for loading all local extensions and the custom theme, plus `/answer` model selection, credential fallback, and RPC guards. Included them in `pnpm run check`.
+- Updated the README and feature guide for Pi 1.2–1.4, including pinned-package update behavior, compaction output limits, and codemode worker queuing.
+- Documented that the separate Pi 1.4.0 CLI installation still pins vulnerable `undici` 8.10.2; left its vendor-managed files intact because no newer Pi release is available.
+- Verified authentication readiness without refreshing credentials, enabled MCP connectivity, offline model startup, and local dependency audits. Left provider/model preferences, the disabled Paper server, credentials, and session history unchanged.
+
 ## 2026-10-10
 
 ### Changed

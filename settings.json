@@ -1,5 +1,6 @@
 {
-  "lastChangelogVersion": "1.1.0",
+  "$schema": "https://pi.dev/schemas/settings.schema.json",
+  "lastChangelogVersion": "1.4.0",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "medium",
@@ -9,7 +10,7 @@
   ],
   "theme": "gruvbox-dark-hard",
   "packages": [
-    "npm:pi-web-access@0.38.0"
+    "npm:pi-web-access@0.44.0"
   ],
   "hideThinkingBlock": false,
   "showCacheMissNotices": true,

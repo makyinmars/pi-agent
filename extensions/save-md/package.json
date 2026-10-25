@@ -14,11 +14,14 @@
     ]
   },
   "devDependencies": {
-    "@earendil-works/pi-ai": "1.1.0",
-    "@earendil-works/pi-coding-agent": "1.1.0",
+    "@earendil-works/pi-ai": "1.4.0",
+    "@earendil-works/pi-coding-agent": "1.4.0",
     "@types/node": "^26.1.2",
     "tsx": "^4.23.5",
     "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "undici": "8.12.3"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",

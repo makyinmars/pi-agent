@@ -17,7 +17,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 - [Thinking Levels / Effort](#thinking-levels--effort)
 - [Extensions (Plugins)](#extensions-plugins)
 - [Commands (Controllers)](#commands-controllers)
-- [Pi 1.1 feature guide](docs/pi-features.md)
+- [Pi 1.4 feature guide](docs/pi-features.md)
 - [Verification](#verification)
 - [Secret Masking (`cloak.json`)](#secret-masking-cloakjson)
 - [Themes](#themes)
@@ -33,7 +33,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## Getting Started
 
-1. **Install Pi 1.1.0 or newer:**
+1. **Install Pi 1.4.0 or newer** (Node.js 22.19+):
 
    ```sh
    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
@@ -72,12 +72,14 @@ After adding, removing, or changing an extension or skill, run `/reload` in exis
 
 Personal skills are automatically discovered under `~/.agents/skills/`; no settings entry or copy into `~/.pi/agent/skills/` is needed. The canonical Railway skill is `~/.agents/skills/use-railway/SKILL.md`. Skill descriptions must be at most 1024 characters. A description-length warning under `[Skill conflicts]` does not mean there is a duplicate skill.
 
-This checkout is aligned with Pi **1.1.0**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and installed Pi packages, then refresh model catalogs, with:
+This checkout is aligned with Pi **1.4.0**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and reconcile installed Pi packages, then refresh model catalogs, with:
 
 ```sh
 pi update --all
 pi update --models
 ```
+
+Versioned package sources are pinned: `pi update --all` does **not** advance `pi-web-access@0.44.0` to a newer version. To change the pin, install an explicitly reviewed release, for example `pi install npm:pi-web-access@0.44.0`. Keep local Pi development dependencies and extension lockfiles aligned with the CLI when upgrading.
 
 ---
 
@@ -85,11 +87,12 @@ pi update --models
 
 The main configuration file is `~/.pi/agent/settings.json`:
 
-See the [Pi 1.1 feature guide](docs/pi-features.md) for tool-selection flags, terminal status, saved codemode images, project MCP overrides, and tool durations.
+See the [Pi 1.4 feature guide](docs/pi-features.md) for tool-selection flags, terminal status, saved codemode images, project MCP overrides, and tool durations.
 
 ```json
 {
-  "lastChangelogVersion": "1.1.0",
+  "$schema": "https://pi.dev/schemas/settings.schema.json",
+  "lastChangelogVersion": "1.4.0",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "medium",
@@ -99,7 +102,7 @@ See the [Pi 1.1 feature guide](docs/pi-features.md) for tool-selection flags, te
   ],
   "theme": "gruvbox-dark-hard",
   "packages": [
-    "npm:pi-web-access@0.38.0"
+    "npm:pi-web-access@0.44.0"
   ],
   "hideThinkingBlock": false,
   "showCacheMissNotices": true,
@@ -119,6 +122,7 @@ See the [Pi 1.1 feature guide](docs/pi-features.md) for tool-selection flags, te
 
 | Key | Description |
 | ----- | ------------- |
+| `$schema` | Pi’s published settings schema for editor validation and completion. |
 | `defaultProvider` | The AI provider to use (e.g., `openai-codex`, `google`, `anthropic`). |
 | `defaultModel` | The default model ID (e.g., `gpt-6.1-sol`). |
 | `defaultThinkingLevel` | Controls the reasoning/effort level. See [Thinking Levels](#thinking-levels--effort). |
@@ -234,8 +238,8 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 When you press `Ctrl+.` or type `/answer`:
 
 1. Finds the latest assistant message on the active session branch
-2. Uses a cheap model (gpt-5.5, falling back to Claude Haiku) to extract any unanswered questions
-3. Falls back to regex extraction if the model output is malformed
+2. Uses Codex `gpt-6.1-sol`, falling back to Claude Haiku 4.5 when Codex credentials are not configured, to extract unanswered questions
+3. Uses Pi’s model runtime for request-time authentication and provider-neutral streaming; falls back to regex extraction if the model output is malformed, but reports provider errors
 4. Opens a custom interactive TUI questionnaire (Tab/Enter to advance, Shift+Tab to go back, Shift+Enter for newlines)
 5. Sends your answers as a follow-up message
 
@@ -402,18 +406,26 @@ Run the automated checks after changing extensions:
 ```sh
 cd ~/.pi/agent
 
-# Top-level and pi-cloak TypeScript checks, plus all extension package checks/tests
+# Type checks, offline extension/theme loading, /answer regressions, and package tests
 pnpm run check
 # Authentication preflight and offline startup smoke test
 pi auth check --provider openai-codex --model gpt-6.1-sol --json
 pi --offline --list-models >/dev/null
 # MCP connections (exits 1 while a server still needs sign-in)
 pi mcp list
+# Check known dependency advisories (managed package cache is local-only)
+pnpm audit
+npm --prefix extensions/web-tools audit
+npm --prefix extensions/save-md audit
+npm --prefix extensions/pi-skill-toggle audit
+npm --prefix npm audit
 ```
 
 The repository has no shared format or lint command. Add these commands if you want consistent formatting and lint checks across extensions.
 
-The package tests cover the local fetch implementation in `web-tools`, plus `save-md` and `pi-skill-toggle`. Type checking and the offline startup smoke test cover the remaining extension entry points. External integrations such as OAuth, browsers, Herdr, Zed, provider APIs, and git pushes still require environment-specific manual testing.
+The root tests load every local extension and the Gruvbox theme through Pi’s resource loader, and check `/answer` model selection, credential fallback, and RPC guarding without provider calls. Package tests cover `web-tools`, `save-md`, and `pi-skill-toggle`. The CLI model-list command is only an offline model-catalog smoke test, not a substitute for the extension-loading test. Tracked overrides pin patched `undici` (8.12.3) and root `zod` 4.x (4.6.7); audit updates to the gitignored managed-package cache must be repeated on other machines. These checks do not audit Pi’s separate global installation.
+
+**Upstream limitation:** the installed Pi 1.4.0 CLI still pins `undici@8.10.2`, affected by [GHSA-xjj6-f33q-929c](https://github.com/advisories/GHSA-xjj6-f33q-929c) and other current advisories. Repository overrides do not patch that separate install. It was left intact rather than modifying vendor-managed files; re-check the next Pi release. External integrations such as OAuth, browsers, Herdr, Zed, provider APIs, and git pushes still require environment-specific manual testing.
 
 ---
 
@@ -443,7 +455,7 @@ Run `/cloak-status` to see active patterns.
 
 ## Themes
 
-Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gruvbox dark variant with hard contrast).
+Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gruvbox dark variant with hard contrast). It uses Pi’s published `https://pi.dev/schemas/theme.schema.json`; Pi 1.2+ validates themes strictly at startup as well as reload.
 
 ---
 
@@ -484,6 +496,7 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 │   ├── pi-skill-toggle/   # Skill toggle TUI extension
 │   ├── save-md/           # Save response as Markdown
 │   └── web-tools/         # Local web fetch with SSRF protection
+├── tests/                 # Offline extension/theme and /answer regression tests
 ├── themes/                # Custom UI themes
 ├── sessions/              # Session storage (gitignored)
 └── npm/                   # NPM cache (gitignored)
