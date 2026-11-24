@@ -2,6 +2,11 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## Unreleased
+
+- Consolidated local extension dependencies into one pnpm workspace and lockfile. Pi-managed npm packages remain separate.
+- Stopped tracking machine-local project trust decisions without deleting them locally. Removed the stale changelog marker for the previous web-access package pin.
+
 ## 2026-11-23
 
 ### Changed

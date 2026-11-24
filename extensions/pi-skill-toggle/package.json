@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "check": "pnpm run typecheck && pnpm test",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
@@ -11,9 +12,6 @@
     "extensions": [
       "./src/index.ts"
     ]
-  },
-  "overrides": {
-    "undici": "8.13.1"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",

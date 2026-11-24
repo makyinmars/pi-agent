@@ -27,6 +27,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit --target ES2024 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions --strict --skipLibCheck --types node extensions/*.ts extensions/pi-cloak/index.ts tests/*.ts",
     "test": "node --import tsx --test tests/*.test.ts",
-    "check": "pnpm run typecheck && pnpm test && npm --prefix extensions/web-tools run check && npm --prefix extensions/save-md run check && npm --prefix extensions/pi-skill-toggle run typecheck && npm --prefix extensions/pi-skill-toggle test"
+    "check": "pnpm run typecheck && pnpm test && pnpm --filter './extensions/**' --fail-if-no-match run check"
   }
 }

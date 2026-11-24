@@ -1,0 +1,4 @@
+packages:
+  - extensions/pi-skill-toggle
+  - extensions/save-md
+  - extensions/web-tools

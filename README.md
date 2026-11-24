@@ -49,11 +49,10 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
    ```sh
    cd ~/.pi/agent
-   pnpm install
-   npm --prefix extensions/web-tools install
-   npm --prefix extensions/pi-skill-toggle install
-   npm --prefix extensions/save-md install
+   pnpm install --frozen-lockfile
    ```
+
+   The workspace installs the root and all local extensions together. If upgrading from the old setup, remove the npm-created `node_modules` directories inside `extensions/pi-skill-toggle`, `extensions/save-md`, and `extensions/web-tools` before installing. Leave the separate Pi-managed `npm/` directory alone.
 
 4. **Configure direct Exa search:**
 
@@ -79,7 +78,7 @@ pi update --extensions
 pi update --models
 ```
 
-Versioned package sources are pinned: `pi update --extensions` does **not** advance `pi-web-access@0.48.0` to a newer version. To change the pin, install an explicitly reviewed release, for example `pi install npm:pi-web-access@0.48.0`. Keep local Pi development dependencies and extension lockfiles aligned with the CLI when upgrading.
+Versioned package sources are pinned: `pi update --extensions` does **not** advance `pi-web-access@0.48.0` to a newer version. To change the pin, install an explicitly reviewed release, for example `pi install npm:pi-web-access@0.48.0`. Keep the workspace’s Pi development dependencies and shared lockfile aligned with the CLI when upgrading.
 
 ---
 
@@ -413,11 +412,8 @@ pi auth check --model openai-codex/gpt-6.2-sol --no-refresh --json
 printf '%s\n' '{"type":"get_state"}' | pi --offline --no-session --no-mcp --mode rpc
 # MCP connections (exits 1 while a server still needs sign-in)
 pi mcp list
-# Check known dependency advisories (managed package cache is local-only)
+# Check workspace dependencies and the separate Pi-managed package store
 pnpm audit
-npm --prefix extensions/web-tools audit
-npm --prefix extensions/save-md audit
-npm --prefix extensions/pi-skill-toggle audit
 npm --prefix npm audit
 ```
 
@@ -425,7 +421,7 @@ The repository has no shared format or lint command. Add these commands if you w
 
 The root tests load every local extension and the Gruvbox theme, check `/answer` selection and credential fallback, and verify the priority tier on a fresh Codex session without provider calls. Package tests cover `web-tools`, `save-md`, and `pi-skill-toggle`. The RPC check shows the effective startup model and thinking level without sending a prompt.
 
-Local overrides pin `undici` 8.13.1 and root `zod` 4.x at 4.6.7. The Pi-managed npm cache is gitignored, so audit updates to that cache must be repeated on other machines. Pi 1.6.0 ships its own `undici` 8.12.4; repo overrides and audits do not apply to the separate CLI install. Live model requests, browsers, Herdr, Zed, and git pushes still require environment-specific checks.
+Workspace overrides pin `undici` 8.13.1 and `zod` 4.x at 4.6.7. The Pi-managed npm cache is gitignored, so audit updates to that cache must be repeated on other machines. Pi 1.6.0 ships its own `undici` 8.12.4; repo overrides and audits do not apply to the separate CLI install. Live model requests, browsers, Herdr, Zed, and git pushes still require environment-specific checks.
 
 ---
 
@@ -474,7 +470,8 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ├── CHANGELOG.md           # Notable configuration changes
 ├── README.md              # This file
 ├── package.json           # NPM dependencies
-├── pnpm-lock.yaml         # Lock file
+├── pnpm-workspace.yaml    # Local extension workspace
+├── pnpm-lock.yaml         # Shared workspace lockfile
 ├── assets/
 │   ├── preview-pi.png     # Preview screenshot
 │   └── void.png           # Header image (copied from the Neovim dashboard)
@@ -499,7 +496,8 @@ Custom themes live in `themes/`. The current theme is `gruvbox-dark-hard` (a Gru
 ├── tests/                 # Offline extension/theme and /answer regression tests
 ├── themes/                # Custom UI themes
 ├── sessions/              # Session storage (gitignored)
-└── npm/                   # NPM cache (gitignored)
+├── trust.json             # Local project-trust decisions (gitignored)
+└── npm/                   # Pi-managed npm packages (gitignored)
 ```
 
 ---

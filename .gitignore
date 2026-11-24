@@ -1,5 +1,4 @@
-node_modules
-**/node_modules/
+node_modules/
 
 .env
 
@@ -10,7 +9,7 @@ auth.json
 
 models.json
 models-store.json
-settings.json
+/trust.json
 
 npm/
 git/

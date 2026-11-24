@@ -30,7 +30,7 @@ pi update --extensions
 pi update --models
 ```
 
-Versioned npm packages remain pinned. To advance web access, review a release and explicitly install it with `pi install npm:pi-web-access@<version>`; `pi update --extensions` alone does not change `0.48.0`. Update this repository’s development dependencies and lockfiles alongside Pi, then run `pnpm run check`.
+Versioned npm packages remain pinned. To advance web access, review a release and explicitly install it with `pi install npm:pi-web-access@<version>`; `pi update --extensions` alone does not change `0.48.0`. Update this workspace’s development dependencies and shared lockfile alongside Pi, then run `pnpm run check`.
 
 The checks load all local extensions and the custom theme through Pi’s resource loader and exercise `/answer` selection, RPC guarding, and the Fast-mode request payload offline. They do not send prompts, mutate credentials, or persist sessions. See the [verification notes](../README.md#verification) for startup checks and dependency audits.
 
