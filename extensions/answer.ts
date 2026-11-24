@@ -65,7 +65,7 @@ interface ExtractionModelPreference {
 }
 
 const EXTRACTION_MODEL_PREFERENCES: readonly ExtractionModelPreference[] = [
-  { provider: "openai-codex", modelId: "gpt-6.1-sol" },
+  { provider: "openai-codex", modelId: "gpt-6.2-sol" },
   { provider: "anthropic", modelId: "claude-haiku-4-5" },
 ];
 

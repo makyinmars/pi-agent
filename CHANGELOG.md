@@ -2,6 +2,15 @@
 
 All notable changes to this Pi configuration are documented here.
 
+## 2026-11-23
+
+### Changed
+
+- Updated the Vite+-managed Pi CLI and local Pi dependencies to 1.6.0, pinned `pi-web-access` to 0.48.0, and refreshed model catalogs.
+- Set new sessions to Codex Sol 6.2 with High thinking and the existing Fast mode on. Updated `/answer` to Sol 6.2 while keeping the Haiku credential fallback. Saved sessions retain their choices.
+- Updated extension dependencies, lockfiles, and security overrides. Kept pnpm on its latest 10.x release because Corepack still looks for the old executable path in newer pnpm releases.
+- Kept `webfetch`’s format and timeout optional using a plain JSON Schema compatible with Pi’s current tool API. Added an offline test for the Fast-mode priority tier.
+
 ## 2026-10-25
 
 ### Changed

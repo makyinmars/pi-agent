@@ -17,7 +17,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 - [Thinking Levels / Effort](#thinking-levels--effort)
 - [Extensions (Plugins)](#extensions-plugins)
 - [Commands (Controllers)](#commands-controllers)
-- [Pi 1.4 feature guide](docs/pi-features.md)
+- [Pi 1.6 feature guide](docs/pi-features.md)
 - [Verification](#verification)
 - [Secret Masking (`cloak.json`)](#secret-masking-cloakjson)
 - [Themes](#themes)
@@ -33,7 +33,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
 ## Getting Started
 
-1. **Install Pi 1.4.0 or newer** (Node.js 22.19+):
+1. **Install Pi 1.6.0 or newer** (Node.js 22.19+):
 
    ```sh
    npm install -g --ignore-scripts @earendil-works/pi-coding-agent
@@ -64,7 +64,7 @@ A personalized [Pi](https://pi.dev) AI coding agent configuration with custom ex
 
    Persist `EXA_API_KEY` in your preferred shell or secret manager rather than committing it.
 5. **Login:** Open Pi and run `/login` with your provider (e.g., Codex). Pick a model and you're ready.
-6. **Verify authentication:** Run `pi auth check --provider openai-codex --model gpt-6.1-sol --json` (adjust the provider/model if you changed the defaults).
+6. **Verify authentication:** Run `pi auth check --model openai-codex/gpt-6.2-sol --no-refresh --json` (adjust the provider/model if you changed the defaults).
 7. **Make sure that MCP connects:** Run `pi mcp list`. OpenAI Docs needs no sign-in. See [Codemode and MCP](#codemode-and-mcp-mcpjson).
 8. **Header image (optional):** Install [`chafa`](https://hpjansson.org/chafa/) (`brew install chafa`) so the startup header can render `assets/void.png`. Without it, the header shows only the VOID lettering.
 
@@ -72,14 +72,14 @@ After adding, removing, or changing an extension or skill, run `/reload` in exis
 
 Personal skills are automatically discovered under `~/.agents/skills/`; no settings entry or copy into `~/.pi/agent/skills/` is needed. The canonical Railway skill is `~/.agents/skills/use-railway/SKILL.md`. Skill descriptions must be at most 1024 characters. A description-length warning under `[Skill conflicts]` does not mean there is a duplicate skill.
 
-This checkout is aligned with Pi **1.4.0**. Local extensions use the current `@earendil-works/pi-*` package namespace and TypeBox 1.x API. Update Pi and reconcile installed Pi packages, then refresh model catalogs, with:
+This checkout is aligned with Pi **1.6.0**. Use your original installation manager to update the CLI. For the Vite+ install used here, run `vp install --global @earendil-works/pi-coding-agent@latest`. Then update installed Pi packages and refresh model catalogs:
 
 ```sh
-pi update --all
+pi update --extensions
 pi update --models
 ```
 
-Versioned package sources are pinned: `pi update --all` does **not** advance `pi-web-access@0.44.0` to a newer version. To change the pin, install an explicitly reviewed release, for example `pi install npm:pi-web-access@0.44.0`. Keep local Pi development dependencies and extension lockfiles aligned with the CLI when upgrading.
+Versioned package sources are pinned: `pi update --extensions` does **not** advance `pi-web-access@0.48.0` to a newer version. To change the pin, install an explicitly reviewed release, for example `pi install npm:pi-web-access@0.48.0`. Keep local Pi development dependencies and extension lockfiles aligned with the CLI when upgrading.
 
 ---
 
@@ -87,22 +87,21 @@ Versioned package sources are pinned: `pi update --all` does **not** advance `pi
 
 The main configuration file is `~/.pi/agent/settings.json`:
 
-See the [Pi 1.4 feature guide](docs/pi-features.md) for tool-selection flags, terminal status, saved codemode images, project MCP overrides, and tool durations.
+See the [Pi 1.6 feature guide](docs/pi-features.md) for tool-selection flags, terminal status, saved codemode images, project MCP overrides, and tool durations.
 
 ```json
 {
   "$schema": "https://pi.dev/schemas/settings.schema.json",
-  "lastChangelogVersion": "1.4.0",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6.1-sol",
-  "defaultThinkingLevel": "medium",
+  "defaultModel": "gpt-6.2-sol",
+  "defaultThinkingLevel": "high",
   "defaultTools": [
     "+codemode",
     "+tool_search"
   ],
   "theme": "gruvbox-dark-hard",
   "packages": [
-    "npm:pi-web-access@0.44.0"
+    "npm:pi-web-access@0.48.0"
   ],
   "hideThinkingBlock": false,
   "showCacheMissNotices": true,
@@ -124,7 +123,7 @@ See the [Pi 1.4 feature guide](docs/pi-features.md) for tool-selection flags, te
 | ----- | ------------- |
 | `$schema` | Pi’s published settings schema for editor validation and completion. |
 | `defaultProvider` | The AI provider to use (e.g., `openai-codex`, `google`, `anthropic`). |
-| `defaultModel` | The default model ID (e.g., `gpt-6.1-sol`). |
+| `defaultModel` | The default model ID (e.g., `gpt-6.2-sol`). |
 | `defaultThinkingLevel` | Controls the reasoning/effort level. See [Thinking Levels](#thinking-levels--effort). |
 | `defaultTools` | Adds `codemode` for scripts and `tool_search` for direct access to discovered tools. Keeps `read`, `bash`, `edit`, and `write`. |
 | `theme` | The UI theme to load from `themes/`. |
@@ -142,7 +141,7 @@ See the [Pi 1.4 feature guide](docs/pi-features.md) for tool-selection flags, te
 You can also override settings per-launch with CLI flags:
 
 ```sh
-pi --thinking high --model gpt-6.1-sol --provider openai-codex
+pi --model openai-codex/gpt-6.2-sol:high
 ```
 
 ---
@@ -238,7 +237,7 @@ Extensions are TypeScript files in `extensions/` that hook into Pi's lifecycle. 
 When you press `Ctrl+.` or type `/answer`:
 
 1. Finds the latest assistant message on the active session branch
-2. Uses Codex `gpt-6.1-sol`, falling back to Claude Haiku 4.5 when Codex credentials are not configured, to extract unanswered questions
+2. Uses Codex `gpt-6.2-sol`, falling back to Claude Haiku 4.5 when Codex credentials are not configured, to extract unanswered questions
 3. Uses Pi’s model runtime for request-time authentication and provider-neutral streaming; falls back to regex extraction if the model output is malformed, but reports provider errors
 4. Opens a custom interactive TUI questionnaire (Tab/Enter to advance, Shift+Tab to go back, Shift+Enter for newlines)
 5. Sends your answers as a follow-up message
@@ -288,6 +287,7 @@ Reports agent lifecycle state (`working`, `blocked`, `idle`) to Herdr via Unix s
 
 #### 🏎️ `openai-codex-fast-mode.ts` — Priority Mode
 
+- Starts on in new Codex sessions. Resumed sessions keep their saved Fast mode.
 - Intercepts `before_provider_request` events to set `service_tier: "priority"` on OpenAI Codex Responses API calls without overwriting an existing tier.
 - Supports `/fast on`, `/fast off`, and `/fast auto`; auto mode accelerates agent turns but leaves background summaries on the provider default.
 - Persists the selected mode within the session, including across `/reload`.
@@ -384,7 +384,7 @@ Key slash commands registered by local and packaged extensions:
 | `fetch_content` | pi-web-access | Extract content from URLs, repositories, PDFs, and videos |
 | `get_search_content` | pi-web-access | Retrieve bounded slices of stored search/fetch content |
 
-Update Pi from the shell with `pi update`. Use `pi update --all` to update Pi and its packages.
+Update Pi from the shell using your [installation manager](#getting-started). Use `pi update --extensions` to update unpinned Pi packages.
 
 **Keyboard Shortcuts:**
 
@@ -406,11 +406,11 @@ Run the automated checks after changing extensions:
 ```sh
 cd ~/.pi/agent
 
-# Type checks, offline extension/theme loading, /answer regressions, and package tests
+# Type checks, offline extension/theme loading, /answer and /fast regressions, and package tests
 pnpm run check
 # Authentication preflight and offline startup smoke test
-pi auth check --provider openai-codex --model gpt-6.1-sol --json
-pi --offline --list-models >/dev/null
+pi auth check --model openai-codex/gpt-6.2-sol --no-refresh --json
+printf '%s\n' '{"type":"get_state"}' | pi --offline --no-session --no-mcp --mode rpc
 # MCP connections (exits 1 while a server still needs sign-in)
 pi mcp list
 # Check known dependency advisories (managed package cache is local-only)
@@ -423,9 +423,9 @@ npm --prefix npm audit
 
 The repository has no shared format or lint command. Add these commands if you want consistent formatting and lint checks across extensions.
 
-The root tests load every local extension and the Gruvbox theme through Pi’s resource loader, and check `/answer` model selection, credential fallback, and RPC guarding without provider calls. Package tests cover `web-tools`, `save-md`, and `pi-skill-toggle`. The CLI model-list command is only an offline model-catalog smoke test, not a substitute for the extension-loading test. Tracked overrides pin patched `undici` (8.12.3) and root `zod` 4.x (4.6.7); audit updates to the gitignored managed-package cache must be repeated on other machines. These checks do not audit Pi’s separate global installation.
+The root tests load every local extension and the Gruvbox theme, check `/answer` selection and credential fallback, and verify the priority tier on a fresh Codex session without provider calls. Package tests cover `web-tools`, `save-md`, and `pi-skill-toggle`. The RPC check shows the effective startup model and thinking level without sending a prompt.
 
-**Upstream limitation:** the installed Pi 1.4.0 CLI still pins `undici@8.10.2`, affected by [GHSA-xjj6-f33q-929c](https://github.com/advisories/GHSA-xjj6-f33q-929c) and other current advisories. Repository overrides do not patch that separate install. It was left intact rather than modifying vendor-managed files; re-check the next Pi release. External integrations such as OAuth, browsers, Herdr, Zed, provider APIs, and git pushes still require environment-specific manual testing.
+Local overrides pin `undici` 8.13.1 and root `zod` 4.x at 4.6.7. The Pi-managed npm cache is gitignored, so audit updates to that cache must be repeated on other machines. Pi 1.6.0 ships its own `undici` 8.12.4; repo overrides and audits do not apply to the separate CLI install. Live model requests, browsers, Herdr, Zed, and git pushes still require environment-specific checks.
 
 ---
 

@@ -18,3 +18,4 @@ git/
 mcp-auth.json
 mcp.log*
 crashes.json
+pi-web-access/last-seen-version.json

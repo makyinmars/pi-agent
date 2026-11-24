@@ -1,7 +1,5 @@
 import { formatSize } from "@earendil-works/pi-coding-agent";
-import { StringEnum } from "@earendil-works/pi-ai";
 import { Text } from "@earendil-works/pi-tui";
-import { Type } from "typebox";
 import { FetchPage, type FetchPageError } from "./fetch-page.ts";
 import { createOperationSignal, FetchPublicWebClient, isOperationTimeoutError } from "./network.ts";
 import { appendExpandHint, appendExpandedPreview, getTextContent } from "./render.ts";
@@ -49,19 +47,22 @@ export function createWebFetchTool(composition?: WebFetchToolComposition) {
 			"Use webfetch when the user provides a URL or after web_search identifies a page to inspect.",
 			"Prefer webfetch format=markdown unless the user explicitly wants plain text or raw source.",
 		],
-		parameters: Type.Object({
-			url: Type.String({ description: "The http:// or https:// URL to fetch." }),
-			format: Type.Optional(
-				StringEnum([...WEB_FETCH_FORMATS], {
+		parameters: {
+			type: "object",
+			properties: {
+				url: { type: "string", description: "The http:// or https:// URL to fetch." },
+				format: {
+					type: "string",
+					enum: WEB_FETCH_FORMATS,
 					description: "Return format. Defaults to the web-tools fetch default format setting.",
-				}),
-			),
-			timeout: Type.Optional(
-				Type.Number({
+				},
+				timeout: {
+					type: "number",
 					description: "Optional timeout in seconds. Overrides the web-tools fetch timeout setting.",
-				}),
-			),
-		}),
+				},
+			},
+			required: ["url"],
+		} as const,
 
 		async execute(
 			_toolCallId: string,

@@ -1,16 +1,16 @@
 {
   "$schema": "https://pi.dev/schemas/settings.schema.json",
-  "lastChangelogVersion": "1.4.0",
+  "lastChangelogVersion": "1.5.2",
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6.1-sol",
-  "defaultThinkingLevel": "medium",
+  "defaultModel": "gpt-6.2-sol",
+  "defaultThinkingLevel": "high",
   "defaultTools": [
     "+codemode",
     "+tool_search"
   ],
   "theme": "gruvbox-dark-hard",
   "packages": [
-    "npm:pi-web-access@0.44.0"
+    "npm:pi-web-access@0.48.0"
   ],
   "hideThinkingBlock": false,
   "showCacheMissNotices": true,
@@ -24,5 +24,8 @@
   },
   "markdown": {
     "mermaid": "streaming"
+  },
+  "extensionChangelogVersions": {
+    "{\"source\":\"npm:pi-web-access@0.44.0\",\"scope\":\"user\"}": "0.44.0"
   }
 }

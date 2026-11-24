@@ -1,15 +1,20 @@
-# Pi 1.4 feature guide
+# Pi 1.6 feature guide
 
-This setup targets Pi 1.4.0 with codemode and tool search enabled, plus pinned `pi-web-access@0.44.0`.
+This setup targets Pi 1.6.0 with codemode and tool search enabled, plus pinned `pi-web-access@0.48.0`.
 It does not configure a local server, Claude Haiku 5.5, or an additional classifier/image provider.
 Run `/reload` after changes to extensions or configuration. Restart Pi after upgrading the CLI itself.
 
-## Changes since Pi 1.1
+## Pi 1.6 in this setup
+
+- New sessions start on OpenAI Codex `gpt-6.2-sol` with High thinking and Fast mode on. Sol 6.2 has a 500K context window on Codex. Resuming an existing session restores its saved choices; use `/model`, `/thinking`, and `/fast on` to change them in that session.
+- `/answer` now prefers Codex Sol 6.2 and still falls back to Claude Haiku 4.5 when Codex credentials are not configured.
+- Pi now validates tool arguments against JSON Schema. The local `webfetch` schema declares only `url` as required and keeps `format` and `timeout` optional.
+
+## Earlier Pi changes
 
 - **Configuration schemas (1.2):** `settings.json` and the Gruvbox theme now reference Pi’s published schemas at `https://pi.dev/schemas/`. Theme validation is strict at startup, not just reload; reusable colors belong under `vars`.
 - **Extension-triggered runs (1.2):** `before_agent_start` also fires for custom-message runs. Handlers that need `event.prompt` must first check `event.messageType === "user"`. This setup’s existing handlers do not depend on that field.
 - **Session tools (1.3–1.4):** resumed sessions retain their active tools, and newly installed extension tools are restored correctly. `--tools +name,-name` modifies the resumed selection; a plain-name list replaces it.
-- **Codex (1.3–1.4):** `gpt-6.1-sol` has a 500K context window. Pi removed unavailable Codex `gpt-5.5`; `/answer` now selects `gpt-6.1-sol` and uses the authenticated model runtime instead of legacy compatibility helpers. Haiku 4.5 remains the credential fallback.
 - **Compaction (1.4):** summaries use the model’s output limit. `compaction.reserveTokens` still controls when compaction starts; it is not a summary-output cap. No custom continuation extension or budget override is needed.
 - **Codemode workers (1.4):** scripts wait up to 60 seconds for a free worker instead of failing immediately. The default pool remains two; leave it alone unless there is measured contention. `PI_CODEMODE_MAX_WORKERS` can raise it.
 - **Image classifiers (1.4):** `models.classify()` supports images with compatible Jev/Clef providers. This is optional and still requires that provider’s credentials; this setup does not add any.
@@ -18,16 +23,16 @@ Pi also fixes concurrent TUI dialogs, terminal teardown, truncated-response reco
 
 ## Update without losing reproducibility
 
+Update the CLI with your [installation manager](../README.md#getting-started), then run:
+
 ```sh
-pi update --all
+pi update --extensions
 pi update --models
 ```
 
-Versioned npm packages remain pinned. To advance web access, review a release and explicitly install it with `pi install npm:pi-web-access@<version>`; `pi update --all` alone does not change `0.44.0`. Update this repository’s development dependencies and lockfiles alongside Pi, then run `pnpm run check`.
+Versioned npm packages remain pinned. To advance web access, review a release and explicitly install it with `pi install npm:pi-web-access@<version>`; `pi update --extensions` alone does not change `0.48.0`. Update this repository’s development dependencies and lockfiles alongside Pi, then run `pnpm run check`.
 
-The checks now load all local extensions and the custom theme through Pi’s resource loader and exercise `/answer` selection and mode guards offline. They do not send prompts, mutate credentials, or persist sessions.
-
-Local dependency audits are clean after patching transitive dependencies. The separately installed Pi 1.4.0 CLI still pins `undici@8.10.2`, affected by current advisories; repository overrides cannot patch that installation. See the [verification notes](../README.md#verification).
+The checks load all local extensions and the custom theme through Pi’s resource loader and exercise `/answer` selection, RPC guarding, and the Fast-mode request payload offline. They do not send prompts, mutate credentials, or persist sessions. See the [verification notes](../README.md#verification) for startup checks and dependency audits.
 
 ## Terminal status
 
@@ -192,6 +197,7 @@ Network fetches and MCP connections require a reachable service.
 - [Pi 1.2 release](https://github.com/earendil-works/pi/releases/tag/v1.2.0)
 - [Pi 1.3 release](https://github.com/earendil-works/pi/releases/tag/v1.3.0)
 - [Pi 1.4 release](https://github.com/earendil-works/pi/releases/tag/v1.4.0)
+- [Pi 1.6 release](https://github.com/earendil-works/pi/releases/tag/v1.6.0)
 - [Settings schemas and reference](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/settings.md)
 - [Terminal status](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/terminal-setup.md#program-status)
 - [Tool selection](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/cli.md#tools)

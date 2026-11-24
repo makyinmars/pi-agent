@@ -19,7 +19,7 @@ async function createHarness(t: TestContext) {
     allowModelNetwork: false,
   });
   const registry = new ModelRegistry(runtime);
-  const model = registry.find("openai-codex", "gpt-6.1-sol");
+  const model = registry.find("openai-codex", "gpt-6.2-sol");
   assert.ok(model);
   const loaded = await discoverAndLoadExtensions([resolve(root, "extensions/answer.ts")], root, root);
   assert.deepEqual(loaded.errors, []);
@@ -57,7 +57,7 @@ test("/answer selects the supported Codex model before opening extraction", asyn
   t.mock.method(registry, "hasConfiguredAuth", () => true);
   const lookup = t.mock.method(registry, "find");
   await assert.rejects(command.handler("", context), /extraction dialog opened/);
-  assert.deepEqual(lookup.mock.calls.map((call) => call.arguments), [["openai-codex", "gpt-6.1-sol"]]);
+  assert.deepEqual(lookup.mock.calls.map((call) => call.arguments), [["openai-codex", "gpt-6.2-sol"]]);
   assert.equal(dialog.mock.callCount(), 1);
   assert.deepEqual(notifications, []);
 });
@@ -68,7 +68,7 @@ test("/answer falls back to Haiku when Codex has no configured credentials", asy
   const lookup = t.mock.method(registry, "find");
   await assert.rejects(command.handler("", context), /extraction dialog opened/);
   assert.deepEqual(lookup.mock.calls.map((call) => call.arguments), [
-    ["openai-codex", "gpt-6.1-sol"], ["anthropic", "claude-haiku-4-5"],
+    ["openai-codex", "gpt-6.2-sol"], ["anthropic", "claude-haiku-4-5"],
   ]);
   assert.equal(dialog.mock.callCount(), 1);
 });
